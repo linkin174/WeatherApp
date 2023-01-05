@@ -48,13 +48,3 @@ final class SearchFieldCell: UITableViewCell {
         searchField.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10).isActive = true
     }
 }
-
-extension SearchFieldCell: ResponderDelegate {
-    func resignFirstResponder() {
-        
-    }
-
-    func clearTextField() {
-        searchField.text = nil
-    }
-}

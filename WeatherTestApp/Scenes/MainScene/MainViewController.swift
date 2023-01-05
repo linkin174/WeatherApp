@@ -18,22 +18,15 @@ protocol MainDisplayLogic: AnyObject {
 //    func displayNewCity(viewModel: MainScene.AddCity.ViewModel)
 }
 
-protocol ResponderDelegate {
-    func clearTextField()
-    func resignFirstResponder()
-}
-
 class MainViewController: UIViewController, MainDisplayLogic {
-
     var isSearching = false
     var router: (NSObjectProtocol & MainRoutingLogic & MainDataPassing)?
     var interactor: MainBusinessLogic?
-    
+
     // MARK: Private properties
 
     private var notificationObserver: NSObjectProtocol?
     private var viewModel: MainScene.LoadWeather.ViewModel?
-    private var delegate: ResponderDelegate!
 
     // MARK: Views
 
@@ -55,8 +48,8 @@ class MainViewController: UIViewController, MainDisplayLogic {
         refreshControl.addTarget(self, action: #selector(reloadData), for: .valueChanged)
         refreshControl.tintColor = .white
         let attributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor : UIColor.white,
-            .font : UIFont.systemFont(ofSize: 16)
+            .foregroundColor: UIColor.white,
+            .font: UIFont.systemFont(ofSize: 16)
         ]
         refreshControl.attributedTitle = NSAttributedString(string: "Reloading forecast...",
                                                             attributes: attributes)
@@ -70,7 +63,6 @@ class MainViewController: UIViewController, MainDisplayLogic {
         indicator.hidesWhenStopped = true
         return indicator
     }()
-
 
     // MARK: Initializers
 
@@ -115,7 +107,7 @@ class MainViewController: UIViewController, MainDisplayLogic {
 
     private func setupNavigationBar() {
         let appearence = UINavigationBarAppearance()
-        appearence.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
+        appearence.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
         appearence.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
         appearence.backgroundColor = .black
         appearence.shadowColor = nil
@@ -148,20 +140,20 @@ class MainViewController: UIViewController, MainDisplayLogic {
         setupNavigationBar()
         loadData()
         notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
-                                               object: nil,
-                                               queue: .main,
-                                                using: { [unowned self] _ in loadData() })
+                                                                      object: nil,
+                                                                      queue: .main,
+                                                                      using: { [unowned self] _ in loadData() })
     }
 
-// MARK: Display Logic
+    // MARK: Display Logic
 
     func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel) {
+        print(#function)
         DispatchQueue.main.async { [weak self] in
             self?.viewModel = viewModel
             self?.indicator.stopAnimating()
             self?.refreshControl.endRefreshing()
-            self?.tableView.reloadSections(IndexSet(integersIn: 1...2), with: .automatic)
-            print(self?.isSearching)
+            self?.tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .fade)
         }
     }
 
@@ -178,14 +170,11 @@ class MainViewController: UIViewController, MainDisplayLogic {
 //        self.viewModel?.weatherCellViewModels.append(viewModel.cellViewModel)
 //        let indexPath = IndexPath(row: (self.viewModel?.weatherCellViewModels.count ?? 0) - 1, section: 1)
 //        tableView.insertRows(at: [indexPath], with: .automatic)
-//        
+//
 //    }
 
     private func deleteCity(at indexPath: IndexPath) {
-//        print("VIEWMODELS \(viewModel?.weatherCellViewModels.map { $0.cityName}) \(viewModel?.weatherCellViewModels.map { $0.cityId })")
-//        print("cityID \(viewModel?.weatherCellViewModels[indexPath.row].cityId)")
         guard let id = viewModel?.weatherCellViewModels[indexPath.row].cityId else { return }
-//        print("pass GUARD")
         viewModel?.weatherCellViewModels.remove(at: indexPath.row)
         tableView.deleteRows(at: [indexPath], with: .automatic)
         let request = MainScene.RemoveCity.Request(cityID: id)
@@ -206,15 +195,12 @@ class MainViewController: UIViewController, MainDisplayLogic {
                         id: 0)
         let request = MainScene.AddCity.Request(city: city)
         interactor?.addCity(request: request)
-//        isSearching = false
-//        delegate.clearTextField()
     }
 }
 
 // MARK: Extension - UITableViewDelegate
 
 extension MainViewController: UITableViewDelegate {
-
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section == 1 {
             router?.routeToDetailsVC()
@@ -222,6 +208,10 @@ extension MainViewController: UITableViewDelegate {
             addCity(forRowAt: indexPath)
         }
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        view.endEditing(true)
     }
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -241,13 +231,18 @@ extension MainViewController: UITableViewDelegate {
 // MARK: Extension - UITableViewDataSource
 
 extension MainViewController: UITableViewDataSource {
+    #warning("customize section header with view")
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if section == 2, !(viewModel?.cityCellViewModels.isEmpty ?? true) {
+        if section == 2, isSearching {
             return "Known cities"
         }
         return nil
     }
+
+//    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+//        30
+//    }
 
     func numberOfSections(in tableView: UITableView) -> Int {
         3
@@ -265,7 +260,6 @@ extension MainViewController: UITableViewDataSource {
         switch indexPath.section {
         case 0:
             guard let cell = tableView.dequeueReusableCell(withIdentifier: SearchFieldCell.reuseID) as? SearchFieldCell else { return UITableViewCell() }
-            delegate = cell
             cell.delegate = self
             return cell
         case 1:
@@ -290,7 +284,11 @@ extension MainViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        indexPath.section == 0 ? 53 : 83
+        switch indexPath.section {
+        case 1: return 83
+        case 2: return 33
+        default: return 53
+        }
     }
 }
 
@@ -298,13 +296,19 @@ extension MainViewController: UITableViewDataSource {
 
 extension MainViewController: UITextFieldDelegate {
 
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        isSearching = true
+    }
+
     func textFieldDidChangeSelection(_ textField: UITextField) {
-        guard let text = textField.text else { return }
-        isSearching = !text.isEmpty
-        search(text)
+        guard let text = textField.text, !text.isEmpty else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.search(text)
+        }
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
+        #warning("need state to track user scrolls search view")
         textField.text = nil
         if textField.text?.isEmpty ?? true || textField.text == nil {
             isSearching = false

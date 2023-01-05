@@ -23,21 +23,21 @@ final class CityCell: UITableViewCell {
     private let cityNameLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = .systemFont(ofSize: 25, weight: .semibold)
+        label.font = .systemFont(ofSize: 18, weight: .semibold)
         return label
     }()
 
     private let countryLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = .systemFont(ofSize: 24, weight: .bold)
+        label.font = .systemFont(ofSize: 16, weight: .bold)
         return label
     }()
 
     private let stateLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = .systemFont(ofSize: 17, weight: .light)
+        label.font = .systemFont(ofSize: 14, weight: .light)
         return label
     }()
 
@@ -64,12 +64,12 @@ final class CityCell: UITableViewCell {
 
         cityNameLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
-            make.top.equalToSuperview().offset(16)
+            make.centerY.equalToSuperview()
         }
 
         stateLabel.snp.makeConstraints { make in
-            make.top.equalTo(cityNameLabel.snp.bottom)
-            make.leading.equalToSuperview().offset(20)
+            make.leading.equalTo(cityNameLabel.snp.trailing).offset(16)
+            make.centerY.equalToSuperview()
         }
 
         countryLabel.snp.makeConstraints { make in

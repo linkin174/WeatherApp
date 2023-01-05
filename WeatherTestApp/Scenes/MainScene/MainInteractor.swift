@@ -21,8 +21,8 @@ protocol MainBusinessLogic: AnyObject {
 }
 
 protocol MainDataStore {
-    var currentWeather: [DailyForecast] { get set }
-    var filteredWeather: [DailyForecast] { get set }
+    var currentWeather: [DailyForecast] { get }
+    var filteredWeather: [DailyForecast] { get }
 }
 
 class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationManagerDelegate {
@@ -38,6 +38,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationMana
     private let storageService: StorageServiceProtocol
     private let networkService: NetworkServiceProtocol
     private var locationManager: CLLocationManager?
+    private let locationService = LocationService()
     private var cities: [City] = []
 
     // MARK: Initializers
@@ -54,6 +55,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationMana
         locationManager = CLLocationManager()
         locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
         locationManager?.delegate = self
+        
     }
 
     func searchCity(request: MainScene.SearchCities.Request) {
@@ -78,19 +80,12 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationMana
         }
     }
 
-    func removeCity(request: MainScene.RemoveCity.Request) {
-        // Find city name by its id because some cities in API response may have another pronounciation
-        guard let city = cities.first(where: { $0.id == request.cityID }) else { return }
-        print("city to del \(city)")
-        currentWeather.removeAll(where: { $0.city.id == city.id })
-        print("current weather least \(currentWeather.map { $0.city.name})")
-        storageService.remove(city)
-    }
-
     func addCity(request: MainScene.AddCity.Request) {
         var city = request.city
         city.id = currentWeather.count
         storageService.add(city)
+        cities = storageService.loadCities()
+        #warning("something wrong with sorting")
         networkService.fetchDailyForecast(for: [city]) { [unowned self] result in
             switch result {
             case .success(let success):
@@ -105,6 +100,13 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationMana
             }
         }
     }
+    
+    func removeCity(request: MainScene.RemoveCity.Request) {
+        guard let city = cities.first(where: { $0.id == request.cityID }) else { return }
+        currentWeather.removeAll(where: { $0.city.id == city.id })
+        storageService.remove(city)
+    }
+
 
     // MARK: Location management
 
@@ -136,7 +138,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationMana
                                                 id: 0)
             if cities.isEmpty {
                 cities.append(currentCity)
-            } else if !cities.contains(currentCity) {
+            } else if !cities.map({$0.id}).contains(currentCity.id) {
                 cities.insert(currentCity, at: 0)
             } else {
                 cities[0] = currentCity
@@ -147,6 +149,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationMana
             case .success(let success):
                 self.currentWeather = success
                     .sorted { $0.city.id ?? 0 < $1.city.id ?? 0 }
+                print(currentWeather.map { $0.city.id })
                 let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: knownCities)
                 self.presenter?.presentWeather(response: response)
             case .failure(let error):

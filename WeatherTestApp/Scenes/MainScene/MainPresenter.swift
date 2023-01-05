@@ -37,7 +37,7 @@ class MainPresenter: MainPresentationLogic {
                 if !response.weather.contains(where: { $0.city.country == element.country && $0.city.name == element.name }) {
                     partialResult.append(CityCellViewModel(cityName: element.name,
                                                            stateName: element.state ?? "",
-                                                           countryName: element.country,
+                                                           countryName: getCountryName(from: element.country),
                                                            latitude: element.lat,
                                                            longitude: element.lon))
                 }
@@ -63,6 +63,10 @@ class MainPresenter: MainPresentationLogic {
 //        let viewModel = MainScene.AddCity.ViewModel(cellViewModel: cellViewModel)
 //        viewController?.displayNewCity(viewModel: viewModel)
 //    }
+    private func getCountryName(from countryCode: String) -> String {
+        let currentLocale = Locale.current
+        return currentLocale.localizedString(forRegionCode: countryCode) ?? countryCode
+    }
 
     private func getWeatherIcon(from code: String?) -> UIImage? {
         guard

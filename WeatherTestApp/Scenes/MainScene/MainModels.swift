@@ -16,8 +16,9 @@ import UIKit
 
 struct MainScene {
 
-    struct LoadWeather {
+    // MARK: LoadWeather UseCase
 
+    enum LoadWeather {
         struct Response {
             let weather: [DailyForecast]
             let knownCities: [CityElement]
@@ -29,20 +30,28 @@ struct MainScene {
         }
     }
 
-    struct SearchCities {
+    // MARK: SearchForCities UseCase
+
+    enum SearchCities {
         struct Request {
             let searchString: String
             let isSearching: Bool
         }
     }
 
-    struct RemoveCity {
+    // MARK: RemoveCityUseCase
+
+    enum RemoveCity {
         struct Request {
             let cityID: Int
         }
+
+        #warning("display search results??")
     }
 
-    struct AddCity {
+    // MARK: AddCity UseCase
+
+    enum AddCity {
 
         struct Request {
             let city: City
@@ -57,7 +66,9 @@ struct MainScene {
         }
     }
 
-    struct HandleError {
+    // MARK: HandleError UseCase
+
+    enum HandleError {
         struct Response {
             let error: Error
         }
@@ -66,7 +77,6 @@ struct MainScene {
             let errorMessage: String
         }
     }
-
 }
 
 // MARK: ViewModels
