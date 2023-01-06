@@ -15,11 +15,11 @@ import UIKit
 protocol MainPresentationLogic {
     func presentWeather(response: MainScene.LoadWeather.Response)
     func presentError(response: MainScene.HandleError.Response)
+    func presentSearchResults(response: MainScene.SearchCities.Response)
 //    func presentNewCity(response: MainScene.AddCity.Response)
 }
 
 class MainPresenter: MainPresentationLogic {
-    
     weak var viewController: MainDisplayLogic?
 
     func presentWeather(response: MainScene.LoadWeather.Response) {
@@ -32,19 +32,37 @@ class MainPresenter: MainPresentationLogic {
                                         cityId: daily.city.id ?? 0)
         }
 
-        let cityCellViewModels = response.knownCities
-            .reduce(into: [CityCellViewModelProtocol]()) { partialResult, element in
+        let placesViewModels = response.knownCities
+            .reduce(into: [PlaceCellViewModelRepresentable]()) { partialResult, element in
                 if !response.weather.contains(where: { $0.city.country == element.country && $0.city.name == element.name }) {
-                    partialResult.append(CityCellViewModel(cityName: element.name,
-                                                           stateName: element.state ?? "",
-                                                           countryName: getCountryName(from: element.country),
-                                                           latitude: element.lat,
-                                                           longitude: element.lon))
+                    partialResult.append(PlaceCellViewModel(cityName: element.name,
+                                                            stateName: element.state ?? "",
+                                                            countryName: getCountryName(from: element.country)))
                 }
             }
-        let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels,
-                                                        cityCellViewModels: cityCellViewModels)
+        let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: placesViewModels)
         viewController?.displayCurrentWeather(viewModel: viewModel)
+    }
+
+    func presentSearchResults(response: MainScene.SearchCities.Response) {
+        let cellsViewModels = response.filteredForecast.map { daily in
+            let icon = UIImage(named: String(daily.list.first?.weather.first?.icon?.dropLast() ?? ""))
+            return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
+                                        weatherIcon: icon,
+                                        temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
+                                        currentTime: formatGMTDate(from: daily.city.timezone ?? 0),
+                                        cityId: daily.city.id ?? 0)
+        }
+        let placesViewModels = response.places
+            .reduce(into: [PlaceCellViewModelRepresentable]()) { partialResult, element in
+                if !response.filteredForecast.contains(where: { $0.city.country == element.country && $0.city.name == element.name }) {
+                    partialResult.append(PlaceCellViewModel(cityName: element.name,
+                                                            stateName: element.state ?? "",
+                                                            countryName: getCountryName(from: element.country)))
+                }
+            }
+        let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: placesViewModels)
+        viewController?.displaySearchResults(viewmodel: viewModel)
     }
 
     func presentError(response: MainScene.HandleError.Response) {

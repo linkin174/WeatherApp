@@ -21,12 +21,12 @@ struct MainScene {
     enum LoadWeather {
         struct Response {
             let weather: [DailyForecast]
-            let knownCities: [CityElement]
+            let knownCities: [PlaceElement]
         }
 
         struct ViewModel {
             var weatherCellViewModels: [WeatherCellViewModelProtocol]
-            var cityCellViewModels: [CityCellViewModelProtocol]
+            var placeCellViewModels: [PlaceCellViewModelRepresentable]
         }
     }
 
@@ -36,6 +36,16 @@ struct MainScene {
         struct Request {
             let searchString: String
             let isSearching: Bool
+        }
+
+        struct Response {
+            let filteredForecast: [DailyForecast]
+            let places: [PlaceElement]
+        }
+        #warning("???")
+        struct ViewModel {
+            let filteredForecast: [DailyForecast]
+            let places: [PlaceElement]
         }
     }
 
@@ -54,7 +64,7 @@ struct MainScene {
     enum AddCity {
 
         struct Request {
-            let city: City
+            let indexPath: IndexPath
         }
 
         struct Response {
@@ -89,10 +99,8 @@ struct WeatherCellViewModel: WeatherCellViewModelProtocol {
     let cityId: Int
 }
 
-struct CityCellViewModel: CityCellViewModelProtocol {
-    let cityName: String
-    let stateName: String
-    let countryName: String
-    let latitude: Double
-    let longitude: Double
+struct PlaceCellViewModel: PlaceCellViewModelRepresentable {
+    var cityName: String
+    var stateName: String
+    var countryName: String
 }

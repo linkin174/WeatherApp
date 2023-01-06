@@ -25,20 +25,19 @@ protocol MainDataStore {
     var filteredWeather: [DailyForecast] { get }
 }
 
-class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationManagerDelegate {
+class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     // MARK: Public Properties
 
     var presenter: MainPresentationLogic?
     var currentWeather: [DailyForecast] = []
     var filteredWeather: [DailyForecast] = []
-    var knownCities: [CityElement] = []
+    private var places: [PlaceElement] = []
 
     // MARK: Private properties
 
     private let storageService: StorageServiceProtocol
     private let networkService: NetworkServiceProtocol
     private var locationManager: CLLocationManager?
-    private let locationService = LocationService()
     private var cities: [City] = []
 
     // MARK: Initializers
@@ -46,116 +45,108 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore, CLLocationMana
     init(storageService: StorageServiceProtocol, networkService: NetworkServiceProtocol) {
         self.storageService = storageService
         self.networkService = networkService
+        super.init()
+        cities = storageService.loadCities()
     }
 
     // MARK: Interaction Logic
 
     func loadData() {
-        cities = storageService.loadCities()
         locationManager = CLLocationManager()
-        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
         locationManager?.delegate = self
-        
+        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
     }
 
     func searchCity(request: MainScene.SearchCities.Request) {
         if request.isSearching {
-            let filtered = currentWeather.filter { daily in
+            filteredWeather = currentWeather.filter { daily in
                 if let name = daily.city.name {
                     return name.lowercased().contains(request.searchString.lowercased())
                 }
                 return false
             }
-            filteredWeather = filtered
-            networkService.fetchCities(searchString: request.searchString) { knownCities in
-                self.knownCities = knownCities
-            }
 
-            let response = MainScene.LoadWeather.Response(weather: filtered, knownCities: knownCities)
-            presenter?.presentWeather(response: response)
+            networkService.fetchCities(searchString: request.searchString) { [unowned self] knownPlaces in
+                    places = knownPlaces
+                let response = MainScene.SearchCities.Response(filteredForecast: filteredWeather, places: places)
+                presenter?.presentSearchResults(response: response)
+//                    let response = MainScene.LoadWeather.Response(weather: filteredWeather, knownCities: places)
+//                    presenter?.presentWeather(response: response)
+
+            }
         } else {
-            knownCities = []
-            let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: knownCities)
+            places.removeAll()
+            let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: places)
             presenter?.presentWeather(response: response)
         }
     }
 
     func addCity(request: MainScene.AddCity.Request) {
-        var city = request.city
-        city.id = currentWeather.count
+        let placeToAdd = places[request.indexPath.row]
+        let city = City(name: placeToAdd.name,
+                        coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat), id: currentWeather.count)
         storageService.add(city)
-        cities = storageService.loadCities()
-        #warning("something wrong with sorting")
+        cities.append(city)
         networkService.fetchDailyForecast(for: [city]) { [unowned self] result in
             switch result {
-            case .success(let success):
-                if let weather = success.first {
-                    self.currentWeather.append(weather)
-                    knownCities.removeAll()
-                    presenter?.presentWeather(response: MainScene.LoadWeather.Response(weather: currentWeather, knownCities: knownCities))
+            case .success(let forecast):
+                if let first = forecast.first {
+                    currentWeather.append(first)
+                    places.removeAll()
+                    let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: places)
+                    presenter?.presentWeather(response: response)
                 }
             case .failure(let error):
                 let response = MainScene.HandleError.Response(error: error)
-                self.presenter?.presentError(response: response)
+                presenter?.presentError(response: response)
             }
         }
     }
-    
+
     func removeCity(request: MainScene.RemoveCity.Request) {
         guard let city = cities.first(where: { $0.id == request.cityID }) else { return }
         currentWeather.removeAll(where: { $0.city.id == city.id })
         storageService.remove(city)
     }
 
-
-    // MARK: Location management
-
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        switch manager.authorizationStatus {
-        case .authorizedAlways, .authorizedWhenInUse:
-            locationManager?.requestLocation()
-        case .notDetermined:
-            locationManager?.requestWhenInUseAuthorization()
-        default:
-            loadForecast()
-        }
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        loadForecast(with: locations.first)
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("ERROR GETTING LOCA")
-    }
-
     // MARK: Private Methods
 
-    private func loadForecast(with currentLocation: CLLocation? = nil) {
-        if let currentLocation {
-            let currentCity = City(coord: Coord(lon: currentLocation.coordinate.longitude.magnitude,
-                                                lat: currentLocation.coordinate.latitude.magnitude),
-                                                id: 0)
-            if cities.isEmpty {
-                cities.append(currentCity)
-            } else if !cities.map({$0.id}).contains(currentCity.id) {
-                cities.insert(currentCity, at: 0)
-            } else {
-                cities[0] = currentCity
-            }
-        }
+    private func loadForecast() {
+        updateCitiesWithLocaitonInfo()
         networkService.fetchDailyForecast(for: cities) { [unowned self] result in
             switch result {
             case .success(let success):
                 self.currentWeather = success
                     .sorted { $0.city.id ?? 0 < $1.city.id ?? 0 }
-                print(currentWeather.map { $0.city.id })
-                let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: knownCities)
+                let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: places)
                 self.presenter?.presentWeather(response: response)
             case .failure(let error):
                 let response = MainScene.HandleError.Response(error: error)
                 self.presenter?.presentError(response: response)
             }
+        }
+    }
+
+    private func updateCitiesWithLocaitonInfo() {
+        if let location = locationManager?.location {
+            let currentCity = City(coord: Coord(lon: location.coordinate.longitude,
+                                                lat: location.coordinate.latitude),
+                                   id: 0)
+            if let index = cities.firstIndex(where: { $0.id == currentCity.id }) {
+                cities[index] = currentCity
+            } else {
+                cities.insert(currentCity, at: 0)
+            }
+        }
+    }
+}
+
+extension MainInteractor: CLLocationManagerDelegate {
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            locationManager?.requestWhenInUseAuthorization()
+        default: loadForecast()
         }
     }
 }

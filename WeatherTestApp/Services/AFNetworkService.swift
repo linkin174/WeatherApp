@@ -10,7 +10,7 @@ import Foundation
 
 protocol NetworkServiceProtocol {
     func fetchDailyForecast(for cities: [City], completion: @escaping (Result<[DailyForecast], AFError>) -> Void)
-    func fetchCities(searchString: String, completion: @escaping (SearchedCities) -> Void)
+    func fetchCities(searchString: String, completion: @escaping ([PlaceElement]) -> Void)
 }
 
 private enum API {
@@ -52,12 +52,12 @@ final class AFNetworkService: NetworkServiceProtocol {
         }
     }
 
-    func fetchCities(searchString: String, completion: @escaping (SearchedCities) -> Void) {
+    func fetchCities(searchString: String, completion: @escaping ([PlaceElement]) -> Void) {
         let url = createURL(api:.geocoder, GeocoderAPI.searchCity)
         let parameters = makeParameters(for: searchString)
         AF.request(url, parameters: parameters)
             .validate()
-            .responseDecodable(of: SearchedCities.self) { response in
+            .responseDecodable(of: [PlaceElement].self) { response in
                 switch response.result {
                 case .success(let searchedCities):
                     completion(searchedCities)
@@ -85,7 +85,7 @@ final class AFNetworkService: NetworkServiceProtocol {
         guard let key = Bundle.main.infoDictionary?["API_KEY"] as? String else { return parameters }
         parameters["appid"] = key
         parameters["q"] = searchString
-        parameters["limit"] = "5"
+        parameters["limit"] = "10"
         return parameters
     }
 
