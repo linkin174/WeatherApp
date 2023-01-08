@@ -45,8 +45,6 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     init(storageService: StorageServiceProtocol, networkService: NetworkServiceProtocol) {
         self.storageService = storageService
         self.networkService = networkService
-        super.init()
-        cities = storageService.loadCities()
     }
 
     // MARK: Interaction Logic
@@ -55,9 +53,11 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         locationManager = CLLocationManager()
         locationManager?.delegate = self
         locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        cities = storageService.loadCities()
     }
 
     func searchCity(request: MainScene.SearchCities.Request) {
+        #warning("race condition here")
         if request.isSearching {
             filteredWeather = currentWeather.filter { daily in
                 if let name = daily.city.name {
@@ -65,20 +65,17 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
                 }
                 return false
             }
-
             networkService.fetchCities(searchString: request.searchString) { [unowned self] knownPlaces in
-                    places = knownPlaces
+                places = knownPlaces.filter { element in
+                    !currentWeather.contains(where: { $0.city.name == element.name && $0.city.country == element.country })
+                }
                 let response = MainScene.SearchCities.Response(filteredForecast: filteredWeather, places: places)
                 presenter?.presentSearchResults(response: response)
-//                    let response = MainScene.LoadWeather.Response(weather: filteredWeather, knownCities: places)
-//                    presenter?.presentWeather(response: response)
-
             }
         } else {
             places.removeAll()
             let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
             presenter?.presentWeather(response: response)
-//            presenter?.presentSearchResults(response: response)
         }
     }
 

@@ -37,6 +37,7 @@ class MainPresenter: MainPresentationLogic {
     }
 
     func presentSearchResults(response: MainScene.SearchCities.Response) {
+
         let cellsViewModels = response.filteredForecast.map { daily in
             let icon = UIImage(named: String(daily.list.first?.weather.first?.icon?.dropLast() ?? ""))
             return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
@@ -45,14 +46,11 @@ class MainPresenter: MainPresentationLogic {
                                         currentTime: formatGMTDate(from: daily.city.timezone ?? 0),
                                         cityId: daily.city.id ?? 0)
         }
-        let placesViewModels = response.places
-            .reduce(into: [PlaceCellViewModelRepresentable]()) { partialResult, element in
-                if !response.filteredForecast.contains(where: { $0.city.country == element.country && $0.city.name == element.name }) {
-                    partialResult.append(PlaceCellViewModel(cityName: element.name,
-                                                            stateName: element.state ?? "",
-                                                            countryName: getCountryName(from: element.country)))
-                }
-            }
+
+        let placesViewModels = response.places.map { PlaceCellViewModel(cityName: $0.name,
+                                                                        stateName: $0.state ?? "",
+                                                                        countryName: getCountryName(from: $0.country))}
+
         let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: placesViewModels)
         viewController?.displaySearchResults(viewModel: viewModel)
     }
@@ -63,16 +61,6 @@ class MainPresenter: MainPresentationLogic {
         viewController?.displayError(viewModel: viewModel)
     }
 
-//    func presentNewCity(response: MainScene.AddCity.Response) {
-//        let icon = UIImage(named: String(response.cityForecast.list.first?.weather.first?.icon?.dropLast() ?? ""))
-//        let cellViewModel = WeatherCellViewModel(cityName: response.cityForecast.city.name ?? "noname",
-//                                                 weatherIcon: icon,
-//                                                 temp: getFormattedTemp(response.cityForecast.list.first?.main.temp ?? 0),
-//                                                 currentTime: formatGMTDate(from: response.cityForecast.city.timezone ?? 0),
-//                                                 cityId: response.cityForecast.city.id ?? 0)
-//        let viewModel = MainScene.AddCity.ViewModel(cellViewModel: cellViewModel)
-//        viewController?.displayNewCity(viewModel: viewModel)
-//    }
     private func getCountryName(from countryCode: String) -> String {
         let currentLocale = Locale.current
         return currentLocale.localizedString(forRegionCode: countryCode) ?? countryCode

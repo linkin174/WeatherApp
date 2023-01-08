@@ -72,17 +72,17 @@ final class PlaceCell: UITableViewCell {
         contentView.addSubview(countryNameLabel)
 
         cityNameLabel.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(16)
+            make.leading.equalToSuperview().offset(20)
             make.top.equalToSuperview().offset(8)
         }
 
         stateNameLabel.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(16)
+            make.leading.equalToSuperview().offset(20)
             make.bottom.equalToSuperview().inset(8)
         }
 
         countryNameLabel.snp.makeConstraints { make in
-            make.trailing.equalToSuperview().inset(16)
+            make.trailing.equalToSuperview().inset(20)
             make.centerY.equalToSuperview()
         }
     }
