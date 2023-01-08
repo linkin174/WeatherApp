@@ -12,22 +12,27 @@
 
 import UIKit
 
+
 protocol MainDisplayLogic: AnyObject {
     func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel)
     func displayError(viewModel: MainScene.HandleError.ViewModel)
-    func displaySearchResults(viewmodel: MainScene.LoadWeather.ViewModel)
-//    func displayNewCity(viewModel: MainScene.AddCity.ViewModel)
+    func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel)
 }
 
 class MainViewController: UIViewController, MainDisplayLogic {
-    var isSearching = false
+
+    var isSearching = false {
+        didSet {
+            print("Is searching state \(isSearching)")
+        }
+    }
     var router: (NSObjectProtocol & MainRoutingLogic & MainDataPassing)?
     var interactor: MainBusinessLogic?
 
     // MARK: Private properties
 
     private var notificationObserver: NSObjectProtocol?
-    private var viewModel: MainScene.LoadWeather.ViewModel?
+    private var mainViewModel: MainScene.LoadWeather.ViewModel?
 
     // MARK: Views
 
@@ -39,7 +44,7 @@ class MainViewController: UIViewController, MainDisplayLogic {
         tableView.register(SearchFieldCell.self, forCellReuseIdentifier: SearchFieldCell.reuseID)
         tableView.register(PlaceCell.self, forCellReuseIdentifier: PlaceCell.reuseID)
         tableView.separatorStyle = .none
-        tableView.backgroundColor = .black
+        tableView.backgroundColor = .mainBackground
         tableView.refreshControl = refreshControl
         return tableView
     }()
@@ -47,9 +52,9 @@ class MainViewController: UIViewController, MainDisplayLogic {
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(reloadData), for: .valueChanged)
-        refreshControl.tintColor = .white
+        refreshControl.tintColor = .mainTextColor
         let attributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: UIColor.white,
+            .foregroundColor: UIColor.mainTextColor,
             .font: UIFont.systemFont(ofSize: 16)
         ]
         refreshControl.attributedTitle = NSAttributedString(string: "Reloading forecast...",
@@ -102,15 +107,15 @@ class MainViewController: UIViewController, MainDisplayLogic {
     }
 
     private func setupVC() {
-        view.backgroundColor = .black
+        view.backgroundColor = .mainBackground
         title = "Weather"
     }
 
     private func setupNavigationBar() {
         let appearence = UINavigationBarAppearance()
-        appearence.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-        appearence.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-        appearence.backgroundColor = .black
+        appearence.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.mainTextColor]
+        appearence.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.mainTextColor]
+        appearence.backgroundColor = .mainBackground
         appearence.shadowColor = nil
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationBar.standardAppearance = appearence
@@ -120,7 +125,7 @@ class MainViewController: UIViewController, MainDisplayLogic {
         navigationController?.navigationBar.backIndicatorImage = backButtonImage
         navigationController?.navigationBar.backIndicatorTransitionMaskImage = backButtonImage
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        navigationItem.backBarButtonItem?.tintColor = .white
+        navigationItem.backBarButtonItem?.tintColor = .mainTextColor
     }
 
     @objc private func reloadData() {
@@ -131,8 +136,8 @@ class MainViewController: UIViewController, MainDisplayLogic {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        indicator.startAnimating()
         view.addSubview(tableView)
+        indicator.startAnimating()
         interactor?.loadData()
         setupVC()
         setupNavigationBar()
@@ -145,35 +150,71 @@ class MainViewController: UIViewController, MainDisplayLogic {
     // MARK: Display Logic
 
     func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel) {
-        self.viewModel = viewModel
+        self.mainViewModel = viewModel
         indicator.stopAnimating()
         refreshControl.endRefreshing()
-        tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .fade)
+        tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .right)
     }
 
-    func displaySearchResults(viewmodel: MainScene.LoadWeather.ViewModel) {
-        #warning("remove to interacor or presenter")
-        guard let viewModel = viewModel else { return }
-        var indexes = [IndexPath]()
-        if viewmodel.weatherCellViewModels.count < viewModel.weatherCellViewModels.count {
-            for (i, model) in viewModel.weatherCellViewModels.enumerated() {
-                if !viewmodel.weatherCellViewModels.contains(where: { $0.cityName == model.cityName }) {
-                    let indexPath = IndexPath(row: i, section: 1)
-                    indexes.append(indexPath)
-                }
-            }
-            self.viewModel?.weatherCellViewModels = viewmodel.weatherCellViewModels
-            tableView.deleteRows(at: indexes, with: .fade)
-        } else {
-            for (i, model) in viewmodel.weatherCellViewModels.enumerated() {
+    func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel) {
+
+        let diff = (mainViewModel?.weatherCellViewModels.count ?? 0) - viewModel.weatherCellViewModels.count
+        // Processing currently shown weather
+        guard let mainViewModel else { return }
+        var weatherIndexPaths = [IndexPath]()
+        if diff > 0 {
+            for (i, model) in mainViewModel.weatherCellViewModels.enumerated() {
                 if !viewModel.weatherCellViewModels.contains(where: { $0.cityName == model.cityName }) {
                     let indexPath = IndexPath(row: i, section: 1)
-                    indexes.append(indexPath)
+                    weatherIndexPaths.append(indexPath)
                 }
             }
-            self.viewModel?.weatherCellViewModels = viewmodel.weatherCellViewModels
-            tableView.insertRows(at: indexes, with: .fade)
+            self.mainViewModel?.weatherCellViewModels = viewModel.weatherCellViewModels
+            tableView.deleteRows(at: weatherIndexPaths, with: .left)
+        } else {
+            for (i, model) in viewModel.weatherCellViewModels.enumerated() {
+                if !mainViewModel.weatherCellViewModels.contains(where: { $0.cityName == model.cityName }) {
+                    let indexPath = IndexPath(row: i, section: 1)
+                    weatherIndexPaths.append(indexPath)
+                }
+            }
+            self.mainViewModel?.weatherCellViewModels = viewModel.weatherCellViewModels
+            tableView.insertRows(at: weatherIndexPaths, with: .left)
         }
+        processPlacesWithTableViewAnimations(input: viewModel.placeCellViewModels)
+    }
+
+    #warning("move in place later")
+    private func processPlacesWithTableViewAnimations(input: [PlaceCellViewModelRepresentable]) {
+        guard let mainViewModel else { return }
+        let difference = mainViewModel.placeCellViewModels.count - input.count
+        self.mainViewModel?.placeCellViewModels = input
+        if difference > 0 {
+            let pathsToDelete = makeIndexPaths(for: 2, in: 0..<difference)
+            tableView.deleteRows(at: pathsToDelete, with: .fade)
+        } else if difference < 0 {
+            let paths = makeIndexPaths(for: 2, in: 0..<abs(difference))
+            tableView.insertRows(at: paths, with: .fade)
+        }
+
+        let pathsToReload = makeIndexPaths(for: 2, in: 0..<mainViewModel.placeCellViewModels.count)
+        reloadPlaceRows(at: pathsToReload)
+    }
+
+    private func reloadPlaceRows(at: [IndexPath]) {
+        at.forEach { indexPath in
+            guard
+                let cell = tableView.cellForRow(at: indexPath) as? PlaceCell,
+                let vm = mainViewModel?.placeCellViewModels[indexPath.row]
+            else {
+                return
+            }
+            cell.setup(with: vm)
+        }
+    }
+
+    private func makeIndexPaths(for section: Int, in range: Range<Int>) -> [IndexPath] {
+        range.map { IndexPath(row: $0, section: section) }
     }
 
     func displayError(viewModel: MainScene.HandleError.ViewModel) {
@@ -184,8 +225,8 @@ class MainViewController: UIViewController, MainDisplayLogic {
     }
 
     private func deleteCity(at indexPath: IndexPath) {
-        guard let id = viewModel?.weatherCellViewModels[indexPath.row].cityId else { return }
-        viewModel?.weatherCellViewModels.remove(at: indexPath.row)
+        guard let id = mainViewModel?.weatherCellViewModels[indexPath.row].cityId else { return }
+        mainViewModel?.weatherCellViewModels.remove(at: indexPath.row)
         tableView.deleteRows(at: [indexPath], with: .automatic)
         let request = MainScene.RemoveCity.Request(cityID: id)
         interactor?.removeCity(request: request)
@@ -197,6 +238,7 @@ class MainViewController: UIViewController, MainDisplayLogic {
     }
 
     private func addCity(forRowAt indexPath: IndexPath) {
+        isSearching = false
         view.endEditing(true)
         let request = MainScene.AddCity.Request(indexPath: indexPath)
         interactor?.addCity(request: request)
@@ -209,6 +251,7 @@ extension MainViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section == 1 {
             router?.routeToDetailsVC()
+            view.endEditing(true)
         } else if indexPath.section == 2 {
             addCity(forRowAt: indexPath)
         }
@@ -236,13 +279,30 @@ extension MainViewController: UITableViewDelegate {
 // MARK: Extension - UITableViewDataSource
 
 extension MainViewController: UITableViewDataSource {
-    #warning("customize section header with view")
 
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if section == 2, !(viewModel?.placeCellViewModels.isEmpty ?? true) {
-            return "Maybe you looking for"
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        if section == 2, isSearching {
+            let view = UIView(frame: CGRect(x: 0, y: 0, width: tableView.frame.width, height: 32))
+            view.backgroundColor = .secondaryBackground
+            let titleLabel = UILabel()
+            titleLabel.font = .systemFont(ofSize: 13, weight: .bold)
+            titleLabel.textColor = .mainTextColor
+            titleLabel.text = "Maybe you looking for:"
+            view.addSubview(titleLabel)
+            titleLabel.snp.makeConstraints { make in
+                make.leading.equalToSuperview().offset(16)
+                make.centerY.equalToSuperview()
+            }
+            return view
         }
         return nil
+    }
+
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        if section == 2 {
+           return 32
+        }
+        return 0
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -252,8 +312,8 @@ extension MainViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0: return 1
-        case 1: return viewModel?.weatherCellViewModels.count ?? 0
-        default: return viewModel?.placeCellViewModels.count ?? 0
+        case 1: return mainViewModel?.weatherCellViewModels.count ?? 0
+        default: return mainViewModel?.placeCellViewModels.count ?? 0
         }
     }
 
@@ -266,7 +326,7 @@ extension MainViewController: UITableViewDataSource {
         case 1:
             guard
                 let cell = tableView.dequeueReusableCell(withIdentifier: WeatherCell.reuseID) as? WeatherCell,
-                let viewModel = viewModel?.weatherCellViewModels[indexPath.row]
+                let viewModel = mainViewModel?.weatherCellViewModels[indexPath.row]
             else {
                 return UITableViewCell()
             }
@@ -275,7 +335,7 @@ extension MainViewController: UITableViewDataSource {
         default:
             guard
                 let cell = tableView.dequeueReusableCell(withIdentifier: PlaceCell.reuseID) as? PlaceCell,
-                let viewModel = viewModel?.placeCellViewModels[indexPath.row]
+                let viewModel = mainViewModel?.placeCellViewModels[indexPath.row]
             else {
                 return UITableViewCell()
             }
@@ -286,6 +346,7 @@ extension MainViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.section {
+        case 0: return 33
         case 1: return 83
         default: return 53
         }
@@ -295,6 +356,7 @@ extension MainViewController: UITableViewDataSource {
 // MARK: Extension - UITextFiledDelegate
 
 extension MainViewController: UITextFieldDelegate {
+    
     func textFieldDidChangeSelection(_ textField: UITextField) {
         guard let text = textField.text else { return }
         isSearching = !text.isEmpty
@@ -303,33 +365,19 @@ extension MainViewController: UITextFieldDelegate {
         }
     }
 
-//    #warning("NEXT UP!!!")
-//
-//    func textFieldDidBeginEditing(_ textField: UITextField) {
-//        print(#function)
-//        isSearching = true
-//    }
-//
-//    func textFieldDidChangeSelection(_ textField: UITextField) {
-//        if let text = textField.text, !text.isEmpty {
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-//                self?.search(text)
-//            }
-//        }
-//    }
-//
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        textField.text?.removeAll()
-        isSearching = false
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        isSearching = true
     }
-    ////
-//    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-//        textField.resignFirstResponder()
-//        return false
-//    }
-//
-//    func textFieldShouldClear(_ textField: UITextField) -> Bool {
-//        isSearching = false
-//        return true
-//    }
+
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        if !isSearching {
+            textField.text? = ""
+        }
+        textField.resignFirstResponder()
+    }
+
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return false
+    }
 }

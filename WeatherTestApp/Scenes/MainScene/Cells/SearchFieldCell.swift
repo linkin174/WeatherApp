@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 final class SearchFieldCell: UITableViewCell {
 
@@ -31,7 +32,7 @@ final class SearchFieldCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        contentView.backgroundColor = .black
+        contentView.backgroundColor = .mainBackground
         setupConstraints()
     }
 
@@ -41,10 +42,11 @@ final class SearchFieldCell: UITableViewCell {
 
     private func setupConstraints() {
         contentView.addSubview(searchField)
-
-        searchField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20).isActive = true
-        searchField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant:  -20).isActive = true
-        searchField.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10).isActive = true
-        searchField.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10).isActive = true
+        searchField.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.width.equalToSuperview().inset(20)
+            make.centerX.equalToSuperview()
+            make.height.equalToSuperview()
+        }
     }
 }

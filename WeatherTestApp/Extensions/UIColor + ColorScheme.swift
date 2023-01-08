@@ -15,4 +15,8 @@ extension UIColor {
     class var mainTextColor: UIColor {
         UIColor(named: "mainText") ?? .white
     }
+
+    class var secondaryBackground: UIColor {
+        UIColor(named: "secondaryBG") ?? .black
+    }
 }

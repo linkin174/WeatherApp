@@ -76,15 +76,16 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
             }
         } else {
             places.removeAll()
-            let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: places)
+            let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
             presenter?.presentWeather(response: response)
+//            presenter?.presentSearchResults(response: response)
         }
     }
 
     func addCity(request: MainScene.AddCity.Request) {
         let placeToAdd = places[request.indexPath.row]
         let city = City(name: placeToAdd.name,
-                        coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat), id: currentWeather.count)
+                        coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat), id: currentWeather.count + 1)
         storageService.add(city)
         cities.append(city)
         networkService.fetchDailyForecast(for: [city]) { [unowned self] result in
@@ -93,7 +94,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
                 if let first = forecast.first {
                     currentWeather.append(first)
                     places.removeAll()
-                    let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: places)
+                    let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
                     presenter?.presentWeather(response: response)
                 }
             case .failure(let error):
@@ -118,7 +119,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
             case .success(let success):
                 self.currentWeather = success
                     .sorted { $0.city.id ?? 0 < $1.city.id ?? 0 }
-                let response = MainScene.LoadWeather.Response(weather: currentWeather, knownCities: places)
+                let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
                 self.presenter?.presentWeather(response: response)
             case .failure(let error):
                 let response = MainScene.HandleError.Response(error: error)

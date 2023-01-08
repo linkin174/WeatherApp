@@ -85,7 +85,7 @@ final class AFNetworkService: NetworkServiceProtocol {
         guard let key = Bundle.main.infoDictionary?["API_KEY"] as? String else { return parameters }
         parameters["appid"] = key
         parameters["q"] = searchString
-        parameters["limit"] = "10"
+        parameters["limit"] = "5"
         return parameters
     }
 

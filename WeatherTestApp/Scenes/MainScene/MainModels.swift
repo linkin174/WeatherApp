@@ -19,9 +19,10 @@ struct MainScene {
     // MARK: LoadWeather UseCase
 
     enum LoadWeather {
+
         struct Response {
             let weather: [DailyForecast]
-            let knownCities: [PlaceElement]
+            let places: [PlaceElement]
         }
 
         struct ViewModel {
@@ -42,11 +43,6 @@ struct MainScene {
             let filteredForecast: [DailyForecast]
             let places: [PlaceElement]
         }
-        #warning("???")
-        struct ViewModel {
-            let filteredForecast: [DailyForecast]
-            let places: [PlaceElement]
-        }
     }
 
     // MARK: RemoveCityUseCase
@@ -55,8 +51,6 @@ struct MainScene {
         struct Request {
             let cityID: Int
         }
-
-        #warning("display search results??")
     }
 
     // MARK: AddCity UseCase

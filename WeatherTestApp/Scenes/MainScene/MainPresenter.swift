@@ -20,6 +20,7 @@ protocol MainPresentationLogic {
 }
 
 class MainPresenter: MainPresentationLogic {
+
     weak var viewController: MainDisplayLogic?
 
     func presentWeather(response: MainScene.LoadWeather.Response) {
@@ -31,16 +32,7 @@ class MainPresenter: MainPresentationLogic {
                                         currentTime: formatGMTDate(from: daily.city.timezone ?? 0),
                                         cityId: daily.city.id ?? 0)
         }
-
-        let placesViewModels = response.knownCities
-            .reduce(into: [PlaceCellViewModelRepresentable]()) { partialResult, element in
-                if !response.weather.contains(where: { $0.city.country == element.country && $0.city.name == element.name }) {
-                    partialResult.append(PlaceCellViewModel(cityName: element.name,
-                                                            stateName: element.state ?? "",
-                                                            countryName: getCountryName(from: element.country)))
-                }
-            }
-        let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: placesViewModels)
+        let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: [])
         viewController?.displayCurrentWeather(viewModel: viewModel)
     }
 
@@ -62,7 +54,7 @@ class MainPresenter: MainPresentationLogic {
                 }
             }
         let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: placesViewModels)
-        viewController?.displaySearchResults(viewmodel: viewModel)
+        viewController?.displaySearchResults(viewModel: viewModel)
     }
 
     func presentError(response: MainScene.HandleError.Response) {

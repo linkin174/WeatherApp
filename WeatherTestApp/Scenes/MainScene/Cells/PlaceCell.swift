@@ -5,8 +5,8 @@
 //  Created by Aleksandr Kretov on 05.01.2023.
 //
 
-import UIKit
 import SnapKit
+import UIKit
 
 protocol PlaceCellViewModelRepresentable {
     var cityName: String { get }
@@ -16,7 +16,11 @@ protocol PlaceCellViewModelRepresentable {
 
 final class PlaceCell: UITableViewCell {
 
+    // MARK: - Static Properties
+
     static let reuseID = "placeCell"
+
+    // MARK: - Private properties
 
     private let cityNameLabel: UILabel = {
         let label = UILabel()
@@ -39,6 +43,7 @@ final class PlaceCell: UITableViewCell {
         return label
     }()
 
+    // MARK: - Initializers
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -46,15 +51,20 @@ final class PlaceCell: UITableViewCell {
         setupConstraints()
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
+    // MARK: - Public Methods
+
     func setup(with viewModel: PlaceCellViewModelRepresentable) {
         cityNameLabel.text = viewModel.cityName
         stateNameLabel.text = viewModel.stateName
         countryNameLabel.text = viewModel.countryName
     }
+
+    // MARK: - Private Methods
 
     private func setupConstraints() {
         contentView.addSubview(cityNameLabel)
@@ -76,5 +86,4 @@ final class PlaceCell: UITableViewCell {
             make.centerY.equalToSuperview()
         }
     }
-
 }

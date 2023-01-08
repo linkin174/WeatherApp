@@ -22,7 +22,7 @@ final class WeatherCell: UITableViewCell {
     private let locationLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
+        label.textColor = .mainTextColor
         label.numberOfLines = 1
         label.font = .systemFont(ofSize: 25, weight: .semibold)
         return label
@@ -31,14 +31,14 @@ final class WeatherCell: UITableViewCell {
     private let tempLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
+        label.textColor = .mainTextColor
         label.font = .systemFont(ofSize: 50, weight: .ultraLight)
         return label
     }()
 
     private let topText: UILabel = {
         let label = UILabel()
-        label.textColor = .white
+        label.textColor = .mainTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 15, weight: .light)
         
@@ -56,7 +56,7 @@ final class WeatherCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupConstraints()
-        contentView.backgroundColor = .black
+        contentView.backgroundColor = .mainBackground
     }
 
     required init?(coder: NSCoder) {
