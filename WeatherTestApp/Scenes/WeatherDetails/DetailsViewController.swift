@@ -73,8 +73,6 @@ class DetailsViewController: UIViewController, DetailsDisplayLogic {
         setup()
     }
 
-    #warning("test")
-
     // MARK: - Setup Clean Code Design Pattern
 
     private func setup() {

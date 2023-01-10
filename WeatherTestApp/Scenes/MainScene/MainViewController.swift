@@ -18,21 +18,21 @@ protocol MainDisplayLogic: AnyObject {
     func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel)
 }
 
-class MainViewController: UIViewController, MainDisplayLogic {
+final class MainViewController: UIViewController, MainDisplayLogic {
     // MARK: - Public Properties
 
     var router: (NSObjectProtocol & MainRoutingLogic & MainDataPassing)?
     var interactor: MainBusinessLogic?
-    var isSearching = false {
-        didSet {
-            print("isSearching state \(isSearching)")
-        }
-    }
+    var isSearching = false
 
     // MARK: - Private properties
 
     private var notificationObserver: NSObjectProtocol?
-    private var mainViewModel: MainScene.LoadWeather.ViewModel?
+    private var mainViewModel: MainScene.LoadWeather.ViewModel? {
+        didSet {
+            showHideTableInfoLabel()
+        }
+    }
 
     // MARK: - Views
 
@@ -83,12 +83,13 @@ class MainViewController: UIViewController, MainDisplayLogic {
 
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        setup()
+        title = "Weather"
+        view.backgroundColor = .mainBackground
+        setupModule()
     }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        setup()
     }
 
     deinit {
@@ -97,9 +98,50 @@ class MainViewController: UIViewController, MainDisplayLogic {
         }
     }
 
+    // MARK: - Lifecicle
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
+                                                                      object: nil,
+                                                                      queue: .main,
+                                                                      using: { [unowned self] _ in reloadData() })
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setupNavigationBar()
+        setupConstraints()
+        indicator.startAnimating()
+        interactor?.loadData()
+    }
+
+    // MARK: - Display Logic
+
+    func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel) {
+            mainViewModel = viewModel
+            indicator.stopAnimating()
+            refreshControl.endRefreshing()
+            tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .fade)
+    }
+
+    func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel) {
+        if isSearching {
+            handleWeatherCellsWithRowAnimation(cells: viewModel.weatherCellViewModels)
+            handlePlacesCellsWithRowAnimation(cells: viewModel.placeCellViewModels)
+        }
+    }
+
+    func displayError(viewModel: MainScene.HandleError.ViewModel) {
+        let retryAction = UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
+            self?.reloadData()
+        }
+        showAlert(title: "OOPS", message: viewModel.errorMessage, actions: [retryAction])
+    }
+
     // MARK: - Private Methods
 
-    private func setup() {
+    private func setupModule() {
         let networkService = AFNetworkService()
         let storageService = StorageService()
         let viewController = self
@@ -115,13 +157,14 @@ class MainViewController: UIViewController, MainDisplayLogic {
         router.dataStore = interactor
     }
 
-    private func setupVC() {
-        view.backgroundColor = .mainBackground
-        title = "Weather"
+    private func setupConstraints() {
+        view.addSubview(tableView)
         tableView.addSubview(tableInfoLabel)
+        let labelOffset = tableView.rect(forSection: 0).height
+
         tableInfoLabel.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
-            make.top.equalToSuperview().offset(79)
+            make.top.equalToSuperview().offset(labelOffset)
         }
     }
 
@@ -142,46 +185,7 @@ class MainViewController: UIViewController, MainDisplayLogic {
         navigationItem.backBarButtonItem?.tintColor = .mainTextColor
     }
 
-    @objc private func reloadData() {
-        interactor?.loadData()
-    }
-
-    // MARK: - View lifecycle
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.addSubview(tableView)
-        indicator.startAnimating()
-        interactor?.loadData()
-        setupVC()
-        setupNavigationBar()
-        notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
-                                                                      object: nil,
-                                                                      queue: .main,
-                                                                      using: { [unowned self] _ in reloadData() })
-    }
-
-    // MARK: - Display Logic
-
-    func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel) {
-        print(#function)
-            mainViewModel = viewModel
-            indicator.stopAnimating()
-            refreshControl.endRefreshing()
-            tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .right)
-    }
-
-    func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel) {
-        print(#function)
-        #warning("protection against race condition")
-        if isSearching {
-            processWeatherWithTableViewAnimations(input: viewModel.weatherCellViewModels)
-            processPlacesWithTableViewAnimations(input: viewModel.placeCellViewModels)
-            processTableViewLabel()
-        }
-    }
-
-    private func processTableViewLabel() {
+    private func showHideTableInfoLabel() {
         guard let mainViewModel else { return }
         if mainViewModel.weatherCellViewModels.isEmpty, mainViewModel.placeCellViewModels.isEmpty {
             tableInfoLabel.isHidden = false
@@ -190,36 +194,35 @@ class MainViewController: UIViewController, MainDisplayLogic {
         }
     }
 
-    private func processWeatherWithTableViewAnimations(input: [WeatherCellViewModelProtocol]) {
+    private func handleWeatherCellsWithRowAnimation(cells: [WeatherCellViewModelProtocol]) {
         guard let mainViewModel else { return }
         var indexPaths = [IndexPath]()
-        let difference = mainViewModel.weatherCellViewModels.count - input.count
+        let difference = mainViewModel.weatherCellViewModels.count - cells.count
         if difference > 0 {
             for (index, model) in mainViewModel.weatherCellViewModels.enumerated() {
-                if !input.contains(where: { $0.cityName == model.cityName }) {
+                if !cells.contains(where: { $0.cityName == model.cityName }) {
                     let indexPath = IndexPath(row: index, section: 1)
                     indexPaths.append(indexPath)
                 }
             }
-            self.mainViewModel?.weatherCellViewModels = input
+            self.mainViewModel?.weatherCellViewModels = cells
             tableView.deleteRows(at: indexPaths, with: .left)
         } else {
-            for (index, model) in input.enumerated() {
+            for (index, model) in cells.enumerated() {
                 if !mainViewModel.weatherCellViewModels.contains(where: { $0.cityName == model.cityName }) {
                     let indexPath = IndexPath(row: index, section: 1)
                     indexPaths.append(indexPath)
                 }
             }
-            self.mainViewModel?.weatherCellViewModels = input
+            self.mainViewModel?.weatherCellViewModels = cells
             tableView.insertRows(at: indexPaths, with: .left)
         }
     }
 
-    private func processPlacesWithTableViewAnimations(input: [PlaceCellViewModelRepresentable]) {
-        // Think about situation when result contains part of the new result
+    private func handlePlacesCellsWithRowAnimation(cells: [PlaceCellViewModelRepresentable]) {
         guard let mainViewModel else { return }
-        let difference = mainViewModel.placeCellViewModels.count - input.count
-        self.mainViewModel?.placeCellViewModels = input
+        let difference = mainViewModel.placeCellViewModels.count - cells.count
+        self.mainViewModel?.placeCellViewModels = cells
         if difference > 0 {
             let pathsToDelete = (0..<difference).map { IndexPath(row: $0, section: 2) }
             tableView.deleteRows(at: pathsToDelete, with: .fade)
@@ -244,13 +247,6 @@ class MainViewController: UIViewController, MainDisplayLogic {
         }
     }
 
-    func displayError(viewModel: MainScene.HandleError.ViewModel) {
-        let retryAction = UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
-            self?.reloadData()
-        }
-        showAlert(title: "OOPS", message: viewModel.errorMessage, actions: [retryAction])
-    }
-
     private func deleteCity(at indexPath: IndexPath) {
         guard let id = mainViewModel?.weatherCellViewModels[indexPath.row].cityId else { return }
         mainViewModel?.weatherCellViewModels.remove(at: indexPath.row)
@@ -270,11 +266,19 @@ class MainViewController: UIViewController, MainDisplayLogic {
         let request = MainScene.AddCity.Request(indexPath: indexPath)
         interactor?.addCity(request: request)
     }
+
+    @objc private func reloadData() {
+        if !refreshControl.isRefreshing {
+            indicator.startAnimating()
+        }
+        interactor?.loadData()
+    }
 }
 
 // MARK: Extension - UITableViewDelegate
 
 extension MainViewController: UITableViewDelegate {
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section == 1 {
             router?.routeToDetailsVC()
@@ -401,7 +405,6 @@ extension MainViewController: UITextFieldDelegate {
     }
 
     func textFieldShouldClear(_ textField: UITextField) -> Bool {
-        print(#function)
         tableInfoLabel.isHidden = true
         return true
     }

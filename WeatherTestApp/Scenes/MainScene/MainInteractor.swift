@@ -57,7 +57,6 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     }
 
     func searchCity(request: MainScene.SearchCities.Request) {
-        #warning("race condition here")
         if request.isSearching {
             filteredWeather = currentWeather.filter { daily in
                 if let name = daily.city.name {

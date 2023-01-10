@@ -16,16 +16,19 @@ protocol MainPresentationLogic {
     func presentWeather(response: MainScene.LoadWeather.Response)
     func presentError(response: MainScene.HandleError.Response)
     func presentSearchResults(response: MainScene.SearchCities.Response)
-//    func presentNewCity(response: MainScene.AddCity.Response)
 }
 
-class MainPresenter: MainPresentationLogic {
+final class MainPresenter: MainPresentationLogic {
+
+    // MARK: - Public Properties
 
     weak var viewController: MainDisplayLogic?
 
+    // MARK: - Presentation Logic
+
     func presentWeather(response: MainScene.LoadWeather.Response) {
         let cellsViewModels = response.weather.map { daily in
-            let icon = UIImage(named: String(daily.list.first?.weather.first?.icon?.dropLast() ?? ""))
+            let icon = getWeatherIcon(from: daily.list.first?.weather.first?.icon)
             return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
                                         weatherIcon: icon,
                                         temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
@@ -37,7 +40,6 @@ class MainPresenter: MainPresentationLogic {
     }
 
     func presentSearchResults(response: MainScene.SearchCities.Response) {
-
         let cellsViewModels = response.filteredForecast.map { daily in
             let icon = UIImage(named: String(daily.list.first?.weather.first?.icon?.dropLast() ?? ""))
             return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
@@ -48,7 +50,7 @@ class MainPresenter: MainPresentationLogic {
         }
 
         let placesViewModels = response.places.map { PlaceCellViewModel(cityName: $0.name,
-                                                                        stateName: $0.state ?? "",
+                                                                        stateName: $0.state,
                                                                         countryName: getCountryName(from: $0.country))}
 
         let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: placesViewModels)
@@ -60,6 +62,8 @@ class MainPresenter: MainPresentationLogic {
         let viewModel = MainScene.HandleError.ViewModel(errorMessage: messege ?? "")
         viewController?.displayError(viewModel: viewModel)
     }
+
+    // MARK: - Private methods
 
     private func getCountryName(from countryCode: String) -> String {
         let currentLocale = Locale.current

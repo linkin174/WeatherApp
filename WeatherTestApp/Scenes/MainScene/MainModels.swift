@@ -16,7 +16,7 @@ import UIKit
 
 struct MainScene {
 
-    // MARK: LoadWeather UseCase
+    // MARK: - LoadWeather UseCase
 
     enum LoadWeather {
 
@@ -31,7 +31,7 @@ struct MainScene {
         }
     }
 
-    // MARK: SearchForCities UseCase
+    // MARK: - SearchForCities UseCase
 
     enum SearchCities {
         struct Request {
@@ -45,7 +45,7 @@ struct MainScene {
         }
     }
 
-    // MARK: RemoveCityUseCase
+    // MARK: - RemoveCityUseCase
 
     enum RemoveCity {
         struct Request {
@@ -53,7 +53,7 @@ struct MainScene {
         }
     }
 
-    // MARK: AddCity UseCase
+    // MARK: - AddCity UseCase
 
     enum AddCity {
 
@@ -62,15 +62,11 @@ struct MainScene {
         }
 
         struct Response {
-            let cityForecast: DailyForecast
-        }
-
-        struct ViewModel {
-            let cellViewModel: WeatherCellViewModelProtocol
+            let cityForecast: [DailyForecast]
         }
     }
 
-    // MARK: HandleError UseCase
+    // MARK: - HandleError UseCase
 
     enum HandleError {
         struct Response {
@@ -83,7 +79,7 @@ struct MainScene {
     }
 }
 
-// MARK: ViewModels
+// MARK: - ViewModels
 
 struct WeatherCellViewModel: WeatherCellViewModelProtocol {
     let cityName: String
@@ -95,6 +91,6 @@ struct WeatherCellViewModel: WeatherCellViewModelProtocol {
 
 struct PlaceCellViewModel: PlaceCellViewModelRepresentable {
     var cityName: String
-    var stateName: String
+    var stateName: String?
     var countryName: String
 }

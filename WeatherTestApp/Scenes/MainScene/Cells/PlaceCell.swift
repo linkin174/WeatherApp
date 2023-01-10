@@ -10,12 +10,11 @@ import UIKit
 
 protocol PlaceCellViewModelRepresentable {
     var cityName: String { get }
-    var stateName: String { get }
+    var stateName: String? { get }
     var countryName: String { get }
 }
 
 final class PlaceCell: UITableViewCell {
-
     // MARK: - Static Properties
 
     static let reuseID = "placeCell"

@@ -20,10 +20,15 @@ protocol MainDataPassing {
     var dataStore: MainDataStore? { get }
 }
 
-class MainRouter: NSObject, MainRoutingLogic, MainDataPassing {
+final class MainRouter: NSObject, MainRoutingLogic, MainDataPassing {
+
+
+    // MARK: - Public properties
 
     var dataStore: MainDataStore?
     weak var viewController: MainViewController?
+
+    // MARK: - Routing Logic
 
     func routeToDetailsVC() {
         let destination = DetailsViewController()
@@ -39,6 +44,8 @@ class MainRouter: NSObject, MainRoutingLogic, MainDataPassing {
         navigate(source: source, destination: destination)
     }
 
+    // MARK: - Private methods
+    
     private func navigate(source: UIViewController, destination: UIViewController) {
         source.navigationController?.pushViewController(destination, animated: true)
     }
