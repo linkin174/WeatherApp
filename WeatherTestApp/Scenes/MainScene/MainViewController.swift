@@ -60,7 +60,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(reloadData), for: .valueChanged)
+        refreshControl.addTarget(self, action: #selector(loadData), for: .valueChanged)
         refreshControl.tintColor = .mainTextColor
         let attributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor.mainTextColor,
@@ -83,8 +83,6 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        title = "Weather"
-        view.backgroundColor = .mainBackground
         setupModule()
     }
 
@@ -102,27 +100,23 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "Weather"
+        setupNavigationBar()
+        setupConstraints()
+        loadData()
         notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
                                                                       object: nil,
                                                                       queue: .main,
-                                                                      using: { [unowned self] _ in reloadData() })
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setupNavigationBar()
-        setupConstraints()
-        indicator.startAnimating()
-        interactor?.loadData()
+                                                                      using: { [unowned self] _ in loadData() })
     }
 
     // MARK: - Display Logic
 
     func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel) {
-            mainViewModel = viewModel
-            indicator.stopAnimating()
-            refreshControl.endRefreshing()
-            tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .fade)
+        mainViewModel = viewModel
+        indicator.stopAnimating()
+        refreshControl.endRefreshing()
+        tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .fade)
     }
 
     func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel) {
@@ -134,7 +128,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     func displayError(viewModel: MainScene.HandleError.ViewModel) {
         let retryAction = UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
-            self?.reloadData()
+            self?.loadData()
         }
         showAlert(title: "OOPS", message: viewModel.errorMessage, actions: [retryAction])
     }
@@ -267,7 +261,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         interactor?.addCity(request: request)
     }
 
-    @objc private func reloadData() {
+    @objc private func loadData() {
         if !refreshControl.isRefreshing {
             indicator.startAnimating()
         }
@@ -278,7 +272,6 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 // MARK: Extension - UITableViewDelegate
 
 extension MainViewController: UITableViewDelegate {
-
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section == 1 {
             router?.routeToDetailsVC()
@@ -389,7 +382,7 @@ extension MainViewController: UITextFieldDelegate {
     func textFieldDidChangeSelection(_ textField: UITextField) {
         guard let text = textField.text else { return }
         isSearching = !text.isEmpty
-        search(text)
+        self.search(text)
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {

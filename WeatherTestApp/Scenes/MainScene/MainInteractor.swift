@@ -26,28 +26,29 @@ protocol MainDataStore {
 }
 
 class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
-    // MARK: Public Properties
+    
+    // MARK: - Public Properties
 
     var presenter: MainPresentationLogic?
     var currentWeather: [DailyForecast] = []
     var filteredWeather: [DailyForecast] = []
     private var places: [PlaceElement] = []
 
-    // MARK: Private properties
+    // MARK: - Private properties
 
     private let storageService: StorageServiceProtocol
     private let networkService: NetworkServiceProtocol
     private var locationManager: CLLocationManager?
     private var cities: [City] = []
 
-    // MARK: Initializers
+    // MARK: - Initializers
 
     init(storageService: StorageServiceProtocol, networkService: NetworkServiceProtocol) {
         self.storageService = storageService
         self.networkService = networkService
     }
 
-    // MARK: Interaction Logic
+    // MARK: - Interaction Logic
 
     func loadData() {
         locationManager = CLLocationManager()
@@ -106,7 +107,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         storageService.remove(city)
     }
 
-    // MARK: Private Methods
+    // MARK: - Private Methods
 
     private func loadForecast() {
         updateCitiesWithLocaitonInfo()
@@ -137,7 +138,7 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         }
     }
 }
-
+// MARK: - Extensions
 extension MainInteractor: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {

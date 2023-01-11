@@ -32,7 +32,7 @@ final class MainPresenter: MainPresentationLogic {
             return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
                                         weatherIcon: icon,
                                         temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
-                                        currentTime: formatGMTDate(from: daily.city.timezone ?? 0),
+                                        currentTime: getHoursFrom(daily.city.timezone ?? 0),
                                         cityId: daily.city.id ?? 0)
         }
         let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: [])
@@ -45,7 +45,7 @@ final class MainPresenter: MainPresentationLogic {
             return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
                                         weatherIcon: icon,
                                         temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
-                                        currentTime: formatGMTDate(from: daily.city.timezone ?? 0),
+                                        currentTime: getHoursFrom(daily.city.timezone ?? 0),
                                         cityId: daily.city.id ?? 0)
         }
 
@@ -78,9 +78,9 @@ final class MainPresenter: MainPresentationLogic {
         return image
     }
 
-    private func formatGMTDate(from seconds: Int) -> String {
+    private func getHoursFrom(_ secondsGMT: Int) -> String {
         let date = Date()
-        let timeZone = TimeZone(secondsFromGMT: seconds)
+        let timeZone = TimeZone(secondsFromGMT: secondsGMT)
         let formatter = DateFormatter()
         formatter.timeZone = timeZone
         formatter.dateFormat = "HH:mm"
