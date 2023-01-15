@@ -5,13 +5,13 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21505"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
-        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="MiscInfoView" customModule="WeatherTestApp" customModuleProvider="target">
             <connections>
-                <outlet property="chanceOfRainLabel" destination="9mj-W4-gdP" id="fBa-5D-Yxy"/>
+                <outlet property="chanceOfLabel" destination="9mj-W4-gdP" id="fBa-5D-Yxy"/>
+                <outlet property="chanceOfTitle" destination="XaQ-29-TLG" id="k7S-qg-bZU"/>
                 <outlet property="contentView" destination="5lB-g6-hnv" id="CFE-q3-pCS"/>
                 <outlet property="fellsLikeLabel" destination="4Ns-8O-yvD" id="Yuf-hp-yCu"/>
                 <outlet property="humidityLabel" destination="BrW-Ae-oGe" id="UUH-ZF-FUi"/>
@@ -30,9 +30,9 @@
             <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <subviews>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LHa-hd-OEH">
+                <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LHa-hd-OEH">
                     <rect key="frame" x="0.0" y="59" width="393" height="0.6666666666666643"/>
-                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="0.5" id="ESl-6w-lym"/>
                     </constraints>
@@ -43,9 +43,9 @@
                     <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="hU1-4k-obJ">
+                <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="hU1-4k-obJ">
                     <rect key="frame" x="20" y="100.33333333333333" width="353" height="0.6666666666666714"/>
-                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="0.5" id="v23-zC-FaI"/>
                     </constraints>
@@ -164,30 +164,30 @@
                     <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="uuQ-Ca-1ez">
+                <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="uuQ-Ca-1ez">
                     <rect key="frame" x="20" y="170.33333333333334" width="353" height="0.66666666666665719"/>
-                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="0.5" id="3kj-Tv-VCf"/>
                     </constraints>
                 </view>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="OA5-KX-TUo">
+                <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="OA5-KX-TUo">
                     <rect key="frame" x="20" y="240.33333333333334" width="353" height="0.66666666666665719"/>
-                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="0.5" id="kJ1-3X-Td8"/>
                     </constraints>
                 </view>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Jaq-ZT-OxJ">
+                <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Jaq-ZT-OxJ">
                     <rect key="frame" x="20" y="307" width="353" height="0.33333333333331439"/>
-                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="0.5" id="UjL-ax-QGS"/>
                     </constraints>
                 </view>
-                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LAK-Qk-FTp">
+                <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LAK-Qk-FTp">
                     <rect key="frame" x="20" y="373.33333333333331" width="353" height="0.66666666666668561"/>
-                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="0.5" id="slk-7R-pPk"/>
                     </constraints>
@@ -265,7 +265,7 @@
                 <constraint firstItem="Lkj-mu-yZg" firstAttribute="leading" secondItem="sFh-Qe-vdC" secondAttribute="leading" constant="20" id="z3R-3f-qJj"/>
             </constraints>
             <connections>
-                <outlet property="chanceOfRainLabel" destination="9mj-W4-gdP" id="AMU-xi-q2O"/>
+                <outlet property="chanceOfLabel" destination="9mj-W4-gdP" id="AMU-xi-q2O"/>
                 <outlet property="fellsLikeLabel" destination="4Ns-8O-yvD" id="5kY-bH-ANc"/>
                 <outlet property="humidityLabel" destination="BrW-Ae-oGe" id="i6M-Wv-UTk"/>
                 <outlet property="precipitationLabel" destination="O7U-lm-ZPe" id="8qf-Dg-xHa"/>
@@ -279,26 +279,5 @@
             </connections>
             <point key="canvasLocation" x="360" y="-51"/>
         </view>
-        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="e4r-kr-9zQ">
-            <rect key="frame" x="0.0" y="0.0" width="42" height="21"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-            <fontDescription key="fontDescription" type="system" pointSize="17"/>
-            <nil key="textColor"/>
-            <nil key="highlightedColor"/>
-            <point key="canvasLocation" x="237" y="305"/>
-        </label>
-        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="wxV-SH-go9">
-            <rect key="frame" x="0.0" y="0.0" width="42" height="21"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-            <fontDescription key="fontDescription" type="system" pointSize="17"/>
-            <nil key="textColor"/>
-            <nil key="highlightedColor"/>
-            <point key="canvasLocation" x="-218" y="-67"/>
-        </label>
     </objects>
-    <resources>
-        <systemColor name="systemBackgroundColor">
-            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
-    </resources>
 </document>

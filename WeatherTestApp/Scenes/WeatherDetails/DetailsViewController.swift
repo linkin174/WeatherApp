@@ -11,23 +11,30 @@
 //
 
 import UIKit
+import SnapKit
+
+#warning("fix details appearing")
 
 protocol DetailsDisplayLogic: AnyObject {
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel)
 }
 
-class DetailsViewController: UIViewController, DetailsDisplayLogic {
+final class DetailsViewController: UIViewController, DetailsDisplayLogic {
+
+    // MARK: - Public properties
 
     var interactor: DetailsBusinessLogic?
     var router: (NSObjectProtocol & DetailsRoutingLogic & DetailsDataPassing)?
 
-    // MARK: Views
+    // MARK: - Private properties
 
     private var viewModel: Details.ShowForecast.ViewModel? {
         didSet {
             collectionView.reloadData()
         }
     }
+
+    // MARK: Views
 
     private lazy var topHeaderView = TopHeaderView(frame: CGRect(x: 0,
                                                                  y: statusBarHeight,
@@ -107,10 +114,17 @@ class DetailsViewController: UIViewController, DetailsDisplayLogic {
         dayForecastStack.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
         dayForecastStack.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -40).isActive = true
         dayForecastStack.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor).isActive = true
-        dayForecastStack.heightAnchor.constraint(equalToConstant: CGFloat((viewModel?.dailyForecastViewModels.count ?? 0) * 25)).isActive = true
+//        dayForecastStack.heightAnchor.constraint(equalToConstant: CGFloat((viewModel?.dailyForecastViewModels.count ?? 0) * 25)).isActive = true
+        #warning("fix this")
+        print(viewModel?.dailyForecastViewModels.count)
+        dayForecastStack.heightAnchor.constraint(equalToConstant: 181).isActive = true
 
-        miscInfoView.widthAnchor.constraint(equalToConstant: 0).isActive = true
-        miscInfoView.topAnchor.constraint(equalTo: dayForecastStack.bottomAnchor, constant: 15).isActive = true
+        miscInfoView.snp.makeConstraints { make in
+            make.top.equalTo(dayForecastStack.snp.bottom).offset(15)
+            make.centerX.equalToSuperview()
+            make.width.equalToSuperview()
+            make.bottom.equalToSuperview()
+        }
     }
 
     // MARK: - View lifecycle
@@ -118,24 +132,26 @@ class DetailsViewController: UIViewController, DetailsDisplayLogic {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = #colorLiteral(red: 0.2492019534, green: 0.5160208344, blue: 0.8688297868, alpha: 1)
-        doSomething()
+        loadData()
+        setupConstraints()
         navigationItem.largeTitleDisplayMode = .never
     }
 
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-        setupConstraints()
+//        setupConstraints()
     }
 
     // MARK: - request data from DetailsInteractor
 
-    func doSomething() {
+    func loadData() {
         interactor?.loadForecast()
     }
 
     // MARK: - display view model from DetailsPresenter
 
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel) {
+        view.layoutIfNeeded()
         self.viewModel = viewModel
         topHeaderView.setup(viewModel: viewModel.headerViewModel)
         dayForecastStack.setup(viewModel: viewModel.dailyForecastViewModels)

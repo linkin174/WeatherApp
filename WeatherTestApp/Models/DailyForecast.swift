@@ -72,10 +72,12 @@ struct Main: Codable {
 // MARK: - Rain
 
 struct Rain: Codable {
-    let threeHours: Double
+    let threeHours: Double?
+    let oneHour: Double?
 
     enum CodingKeys: String, CodingKey {
         case threeHours = "3h"
+        case oneHour = "1h"
     }
 }
 

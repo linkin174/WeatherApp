@@ -10,6 +10,8 @@ import SnapKit
 
 final class SearchFieldCell: UITableViewCell {
 
+    // MARK: - Public properties
+
     static let reuseID = "searchCell"
 
     weak var delegate: UITextFieldDelegate!  {
@@ -17,6 +19,8 @@ final class SearchFieldCell: UITableViewCell {
             searchField.delegate = delegate
         }
     }
+
+    // MARK: - Private properties
 
     private let searchField: UISearchTextField = {
         let field = UISearchTextField()
@@ -30,6 +34,8 @@ final class SearchFieldCell: UITableViewCell {
         return field
     }()
 
+    // MARK: - Initializers
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         contentView.backgroundColor = .mainBackground
@@ -40,6 +46,8 @@ final class SearchFieldCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: Private methods
+    
     private func setupConstraints() {
         contentView.addSubview(searchField)
         searchField.snp.makeConstraints { make in

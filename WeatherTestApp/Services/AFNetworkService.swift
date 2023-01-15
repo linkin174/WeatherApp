@@ -9,7 +9,8 @@ import Alamofire
 import Foundation
 
 protocol NetworkServiceProtocol {
-    func fetchDailyForecast(for cities: [City], completion: @escaping (Result<[DailyForecast], AFError>) -> Void)
+    func fetchCurrentWeather(for cities: [City], completion: @escaping (Result<[CurrentWeather], AFError>) -> Void)
+    func fetchDailyForecast(for city: City, completion: @escaping (Result<DailyForecast, AFError>) -> Void)
     func fetchCities(searchString: String, completion: @escaping ([PlaceElement]) -> Void)
 }
 
@@ -20,31 +21,30 @@ private enum API {
 final class AFNetworkService: NetworkServiceProtocol {
     // MARK: Public Methods
 
-    func fetchDailyForecast(for cities: [City], completion: @escaping (Result<[DailyForecast], Alamofire.AFError>) -> Void) {
-        let group = DispatchGroup()
-        let url = createURL(api: .weather, WeatherAPI.getForecast)
-        var output: [DailyForecast] = []
+    func fetchCurrentWeather(for cities: [City], completion: @escaping (Result<[CurrentWeather], AFError>) -> Void) {
+        let url = createURL(api: .weather, WeatherAPI.getWeather)
+        let dispatchGroup = DispatchGroup()
+        var output = [CurrentWeather]()
         var fetchingError: AFError?
-
         for city in cities {
-            group.enter()
+            dispatchGroup.enter()
             let parameters = makeParameters(for: city)
             AF.request(url, parameters: parameters)
                 .validate()
-                .responseDecodable(of: DailyForecast.self) { response in
+                .responseDecodable(of: CurrentWeather.self) { response in
                     switch response.result {
-                    case .success(var currentWeather):
-                        currentWeather.city.id = city.id
-                        output.append(currentWeather)
-                        group.leave()
+                    case .success(var weather):
+                        weather.internalId = city.id
+                        output.append(weather)
+                        dispatchGroup.leave()
                     case .failure(let error):
                         fetchingError = error
-                        group.leave()
+                        dispatchGroup.leave()
                     }
                 }
         }
 
-        group.notify(queue: .main) {
+        dispatchGroup.notify(queue: .main) {
             completion(.success(output))
             if let fetchingError {
                 completion(.failure(fetchingError))
@@ -52,8 +52,23 @@ final class AFNetworkService: NetworkServiceProtocol {
         }
     }
 
+    func fetchDailyForecast(for city: City, completion: @escaping (Result<DailyForecast, AFError>) -> Void) {
+        let url = createURL(api: .weather, WeatherAPI.getForecast)
+            let parameters = makeParameters(for: city)
+            AF.request(url, parameters: parameters)
+                .validate()
+                .responseDecodable(of: DailyForecast.self) { response in
+                    switch response.result {
+                    case .success(let dailyForecast):
+                        completion(.success(dailyForecast))
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+    }
+
     func fetchCities(searchString: String, completion: @escaping ([PlaceElement]) -> Void) {
-        let url = createURL(api:.geocoder, GeocoderAPI.searchCity)
+        let url = createURL(api: .geocoder, GeocoderAPI.searchCity)
         let parameters = makeParameters(for: searchString)
         AF.request(url, parameters: parameters)
             .validate()

@@ -15,6 +15,7 @@ protocol PlaceCellViewModelRepresentable {
 }
 
 final class PlaceCell: UITableViewCell {
+    
     // MARK: - Static Properties
 
     static let reuseID = "placeCell"

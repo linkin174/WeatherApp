@@ -17,12 +17,12 @@ protocol DetailsBusinessLogic {
 }
 
 protocol DetailsDataStore {
-    var weather: DailyForecast? { get set }
+    var weather: CurrentWeather? { get set }
 }
 
 class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
 
-    var weather: DailyForecast?
+    var weather: CurrentWeather?
     var presenter: DetailsPresentationLogic?
 
     private let networkService: NetworkServiceProtocol
@@ -33,8 +33,20 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
 
     func loadForecast() {
         guard let weather else { return }
-        let response = Details.ShowForecast.Response(forecast: weather)
-            presenter?.presentForecast(response: response)
+        #warning("continue")
+        let city = City(coord: weather.coord, id: weather.internalId ?? 0)
+        networkService.fetchDailyForecast(for: city) { [unowned self] result in
+            switch result {
+            case .success(let forecast):
+                let response = Details.ShowForecast.Response(forecast: forecast)
+                presenter?.presentForecast(response: response)
+            case .failure(let error):
+                let response = Details.HandleError.Response(error: error)
+                presenter?.presentError(response: response)
+            }
+        }
+//        let response = Details.ShowForecast.Response(forecast: weather)
+//            presenter?.presentForecast(response: response)
 
 //        let city = City(coord: weather?.coord)
 //        networkService.fetchDailyForecast(for: city) { [weak self] result in

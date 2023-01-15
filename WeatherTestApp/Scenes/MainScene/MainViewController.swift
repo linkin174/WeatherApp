@@ -46,6 +46,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         tableView.separatorStyle = .none
         tableView.backgroundColor = .mainBackground
         tableView.refreshControl = refreshControl
+        tableView.showsVerticalScrollIndicator = false
         return tableView
     }()
 
@@ -71,7 +72,15 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         return refreshControl
     }()
 
-    private var indicator: UIActivityIndicatorView = {
+    private let indicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.color = .white
+        indicator.startAnimating()
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+
+    private let sectionIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
         indicator.color = .white
         indicator.startAnimating()
@@ -113,6 +122,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     // MARK: - Display Logic
 
     func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel) {
+        tableView.isUserInteractionEnabled = true
         mainViewModel = viewModel
         indicator.stopAnimating()
         refreshControl.endRefreshing()
@@ -154,8 +164,8 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     private func setupConstraints() {
         view.addSubview(tableView)
         tableView.addSubview(tableInfoLabel)
-        let labelOffset = tableView.rect(forSection: 0).height
 
+        let labelOffset = tableView.rect(forSection: 0).height
         tableInfoLabel.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
             make.top.equalToSuperview().offset(labelOffset)
@@ -255,8 +265,10 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     }
 
     private func addCity(forRowAt indexPath: IndexPath) {
+        indicator.startAnimating()
         isSearching = false
         view.endEditing(true)
+        tableView.isUserInteractionEnabled = false
         let request = MainScene.AddCity.Request(indexPath: indexPath)
         interactor?.addCity(request: request)
     }
@@ -316,6 +328,7 @@ extension MainViewController: UITableViewDelegate {
         }
         return nil
     }
+
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.section {

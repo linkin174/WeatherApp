@@ -28,6 +28,16 @@ enum Details {
             let miscInfoViewModel: MiscInfoViewModelProtocol
         }
     }
+
+    enum HandleError {
+        struct Response {
+            let error: Error
+        }
+
+        struct ViewModel {
+            let errorMessage: String
+        }
+    }
 }
 
 struct HeaderViewModel: TopHeaderViewModelProtocol {
@@ -59,7 +69,8 @@ struct MiscInfoViewModel: MiscInfoViewModelProtocol {
     var weatherDescription: String
     var sunriseTime: String
     var sunsetTime: String
-    var chanceOfRain: String
+    var chanceOfPop: String?
+    var chanceOfSnow: String?
     var humidity: String
     var wind: String
     var feelsLike: String
@@ -67,5 +78,6 @@ struct MiscInfoViewModel: MiscInfoViewModelProtocol {
     var pressure: String
     var visibility: String
     var uvIndex: String
+    var isRain: Bool
 }
 

@@ -27,26 +27,41 @@ final class MainPresenter: MainPresentationLogic {
     // MARK: - Presentation Logic
 
     func presentWeather(response: MainScene.LoadWeather.Response) {
-        let cellsViewModels = response.weather.map { daily in
-            let icon = getWeatherIcon(from: daily.list.first?.weather.first?.icon)
-            return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
+        let cellsViewModels = response.weather.map { currentWeather in
+            let icon = getWeatherIcon(from: currentWeather.weather?.first?.icon)
+            return WeatherCellViewModel(cityName: currentWeather.name ?? "--",
                                         weatherIcon: icon,
-                                        temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
-                                        currentTime: getHoursFrom(daily.city.timezone ?? 0),
-                                        cityId: daily.city.id ?? 0)
+                                        temp: getFormattedTemp(currentWeather.main?.temp),
+                                        currentTime: getHoursFrom(currentWeather.timezone),
+                                        cityId: currentWeather.internalId ?? 0)
         }
+//        let cellsViewModels = response.weather.map { daily in
+////            let icon = getWeatherIcon(from: daily.list.first?.weather.first?.icon)
+////            let icon = daily.w
+//            return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
+//                                        weatherIcon: icon,
+//                                        temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
+//                                        currentTime: getHoursFrom(daily.city.timezone ?? 0),
+//                                        cityId: daily.city.id ?? 0)
+//        }
         let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: [])
         viewController?.displayCurrentWeather(viewModel: viewModel)
     }
 
     func presentSearchResults(response: MainScene.SearchCities.Response) {
-        let cellsViewModels = response.filteredForecast.map { daily in
-            let icon = UIImage(named: String(daily.list.first?.weather.first?.icon?.dropLast() ?? ""))
-            return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
+        let cellsViewModels = response.filteredForecast.map { currentWeather in
+            let icon = getWeatherIcon(from: currentWeather.weather?.first?.icon)
+            return WeatherCellViewModel(cityName: currentWeather.name ?? "--",
                                         weatherIcon: icon,
-                                        temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
-                                        currentTime: getHoursFrom(daily.city.timezone ?? 0),
-                                        cityId: daily.city.id ?? 0)
+                                        temp: getFormattedTemp(currentWeather.main?.temp),
+                                        currentTime: getHoursFrom(currentWeather.timezone),
+                                        cityId: currentWeather.internalId ?? 0)
+//            let icon = UIImage(named: String(daily.list.first?.weather.first?.icon?.dropLast() ?? ""))
+//            return WeatherCellViewModel(cityName: daily.city.name ?? "noname",
+//                                        weatherIcon: nil,
+//                                        temp: getFormattedTemp(daily.list.first?.main.temp ?? 0),
+//                                        currentTime: getHoursFrom(daily.city.timezone ?? 0),
+//                                        cityId: daily.city.id ?? 0)
         }
 
         let placesViewModels = response.places.map { PlaceCellViewModel(cityName: $0.name,
@@ -78,7 +93,8 @@ final class MainPresenter: MainPresentationLogic {
         return image
     }
 
-    private func getHoursFrom(_ secondsGMT: Int) -> String {
+    private func getHoursFrom(_ secondsGMT: Int?) -> String {
+        guard let secondsGMT else { return "12:00" }
         let date = Date()
         let timeZone = TimeZone(secondsFromGMT: secondsGMT)
         let formatter = DateFormatter()
@@ -87,7 +103,8 @@ final class MainPresenter: MainPresentationLogic {
         return formatter.string(from: date)
     }
 
-    private func getFormattedTemp(_ temp: Double) -> String {
+    private func getFormattedTemp(_ temp: Double?) -> String {
+        guard let temp else { return "--" }
         if round(temp) == 0 {
             // If temp is Zero ignore "-" sign and return 0
             return NSString(format: "0%@" as NSString, "\u{00B0}") as String

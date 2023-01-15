@@ -6,12 +6,13 @@
 //
 
 import UIKit
+import SnapKit
 
 protocol MiscInfoViewModelProtocol {
     var weatherDescription: String { get }
     var sunriseTime: String { get }
     var sunsetTime: String { get }
-    var chanceOfRain: String { get }
+    var chanceOfPop: String? { get }
     var humidity: String { get }
     var wind: String { get }
     var feelsLike: String { get }
@@ -19,6 +20,7 @@ protocol MiscInfoViewModelProtocol {
     var pressure: String { get }
     var visibility: String { get }
     var uvIndex: String { get }
+    var isRain: Bool { get }
 }
 
 final class MiscInfoView: UIView {
@@ -26,7 +28,8 @@ final class MiscInfoView: UIView {
     @IBOutlet private weak var weatherDescriptionTitle: UILabel!
     @IBOutlet private weak var sunriseTitle: UILabel!
     @IBOutlet private weak var sunsetLabel: UILabel!
-    @IBOutlet private weak var chanceOfRainLabel: UILabel!
+    @IBOutlet private weak var chanceOfTitle: UILabel!
+    @IBOutlet private weak var chanceOfLabel: UILabel!
     @IBOutlet private weak var humidityLabel: UILabel!
     @IBOutlet private weak var windSpeedLabel: UILabel!
     @IBOutlet private weak var fellsLikeLabel: UILabel!
@@ -34,12 +37,10 @@ final class MiscInfoView: UIView {
     @IBOutlet private weak var pressureLabel: UILabel!
     @IBOutlet private weak var visabilityLabel: UILabel!
     @IBOutlet private weak var uvIndexLabel: UILabel!
-    @IBOutlet var contentView: MiscInfoView!
+    @IBOutlet private weak var contentView: MiscInfoView!
 
     init() {
         super.init(frame: .zero)
-        #warning("problem somethere here")
-        translatesAutoresizingMaskIntoConstraints = false
         commonInit()
     }
 
@@ -47,17 +48,14 @@ final class MiscInfoView: UIView {
         super.init(coder: coder)
     }
 
-    func commonInit() {
-        Bundle.main.loadNibNamed("MiscInfoView", owner: self)
-        addSubview(contentView)
-        contentView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    }
-
     func setup(viewModel: MiscInfoViewModelProtocol) {
+        if !viewModel.isRain {
+            chanceOfTitle.text = "CHANCE OF SNOW"
+        }
         weatherDescriptionTitle.text = viewModel.weatherDescription
         sunriseTitle.text = viewModel.sunriseTime
         sunsetLabel.text = viewModel.sunsetTime
-        chanceOfRainLabel.text = viewModel.chanceOfRain
+        chanceOfLabel.text = viewModel.chanceOfPop
         humidityLabel.text = viewModel.humidity
         windSpeedLabel.text = viewModel.wind
         fellsLikeLabel.text = viewModel.feelsLike
@@ -65,5 +63,13 @@ final class MiscInfoView: UIView {
         pressureLabel.text = viewModel.pressure
         visabilityLabel.text = viewModel.visibility
         uvIndexLabel.text = viewModel.uvIndex
+    }
+    
+    private func commonInit() {
+        Bundle.main.loadNibNamed("MiscInfoView", owner: self)
+        addSubview(contentView)
+        contentView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
     }
 }

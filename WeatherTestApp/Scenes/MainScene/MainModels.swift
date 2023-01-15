@@ -21,7 +21,7 @@ struct MainScene {
     enum LoadWeather {
 
         struct Response {
-            let weather: [DailyForecast]
+            let weather: [CurrentWeather]
             let places: [PlaceElement]
         }
 
@@ -40,7 +40,7 @@ struct MainScene {
         }
 
         struct Response {
-            let filteredForecast: [DailyForecast]
+            let filteredForecast: [CurrentWeather]
             let places: [PlaceElement]
         }
     }
@@ -62,7 +62,7 @@ struct MainScene {
         }
 
         struct Response {
-            let cityForecast: [DailyForecast]
+            let cityForecast: [CurrentWeather]
         }
     }
 

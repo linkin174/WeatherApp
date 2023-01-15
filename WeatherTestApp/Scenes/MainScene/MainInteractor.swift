@@ -21,17 +21,17 @@ protocol MainBusinessLogic: AnyObject {
 }
 
 protocol MainDataStore {
-    var currentWeather: [DailyForecast] { get }
-    var filteredWeather: [DailyForecast] { get }
+    var currentWeather: [CurrentWeather] { get }
+    var filteredWeather: [CurrentWeather] { get }
 }
 
-class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
+final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     
     // MARK: - Public Properties
 
     var presenter: MainPresentationLogic?
-    var currentWeather: [DailyForecast] = []
-    var filteredWeather: [DailyForecast] = []
+    var currentWeather: [CurrentWeather] = []
+    var filteredWeather: [CurrentWeather] = []
     private var places: [PlaceElement] = []
 
     // MARK: - Private properties
@@ -59,15 +59,16 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 
     func searchCity(request: MainScene.SearchCities.Request) {
         if request.isSearching {
-            filteredWeather = currentWeather.filter { daily in
-                if let name = daily.city.name {
-                    return name.lowercased().contains(request.searchString.lowercased())
+            filteredWeather = currentWeather.filter { weather in
+                if let cityName = weather.name {
+                    return cityName.lowercased().contains(request.searchString.lowercased())
                 }
                 return false
             }
             networkService.fetchCities(searchString: request.searchString) { [unowned self] knownPlaces in
                 places = knownPlaces.filter { element in
-                    !currentWeather.contains(where: { $0.city.name == element.name && $0.city.country == element.country })
+                    let coord = Coord(lon: element.lon, lat: element.lat)
+                    return !currentWeather.contains(where: { roundCoordinates($0.coord) == roundCoordinates(coord) })
                 }
                 let response = MainScene.SearchCities.Response(filteredForecast: filteredWeather, places: places)
                 presenter?.presentSearchResults(response: response)
@@ -85,25 +86,24 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
                         coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat), id: currentWeather.count + 1)
         storageService.add(city)
         cities.append(city)
-        networkService.fetchDailyForecast(for: [city]) { [unowned self] result in
+        networkService.fetchCurrentWeather(for: [city]) { [unowned self] result in
             switch result {
-            case .success(let forecast):
-                if let first = forecast.first {
-                    currentWeather.append(first)
-                    places.removeAll()
-                    let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
-                    presenter?.presentWeather(response: response)
-                }
+            case .success(let weather):
+                guard let first = weather.first else { return }
+                currentWeather.append(first)
+                places.removeAll()
+                let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
+                presenter?.presentWeather(response: response)
             case .failure(let error):
-                let response = MainScene.HandleError.Response(error: error)
-                presenter?.presentError(response: response)
+                let respone = MainScene.HandleError.Response(error: error)
+                presenter?.presentError(response: respone)
             }
         }
     }
 
     func removeCity(request: MainScene.RemoveCity.Request) {
         guard let city = cities.first(where: { $0.id == request.cityID }) else { return }
-        currentWeather.removeAll(where: { $0.city.id == city.id })
+        currentWeather.removeAll(where: { $0.internalId == city.id })
         storageService.remove(city)
     }
 
@@ -111,16 +111,16 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 
     private func loadForecast() {
         updateCitiesWithLocaitonInfo()
-        networkService.fetchDailyForecast(for: cities) { [unowned self] result in
+        networkService.fetchCurrentWeather(for: cities) { [unowned self] result in
             switch result {
-            case .success(let success):
-                self.currentWeather = success
-                    .sorted { $0.city.id ?? 0 < $1.city.id ?? 0 }
+            case .success(let weather):
+                self.currentWeather = weather
+                    .sorted { $0.internalId ?? 0 < $1.internalId ?? 0}
                 let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
-                self.presenter?.presentWeather(response: response)
+                presenter?.presentWeather(response: response)
             case .failure(let error):
                 let response = MainScene.HandleError.Response(error: error)
-                self.presenter?.presentError(response: response)
+                presenter?.presentError(response: response)
             }
         }
     }
@@ -136,6 +136,13 @@ class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
                 cities.insert(currentCity, at: 0)
             }
         }
+    }
+
+    private func roundCoordinates(_ coord: Coord?) -> Coord? {
+        guard let lat = coord?.lat, let lon = coord?.lon else { return nil }
+        let roundedLon = round(lon * 100) / 100
+        let roundedLat = round(lat * 100) / 100
+        return Coord(lon: roundedLon, lat: roundedLat)
     }
 }
 // MARK: - Extensions

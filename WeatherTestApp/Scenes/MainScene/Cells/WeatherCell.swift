@@ -17,7 +17,11 @@ protocol WeatherCellViewModelProtocol {
 
 final class WeatherCell: UITableViewCell {
 
+    // MARK: - Public properties
+
     static let reuseID = "weathercell"
+
+    // MARK: - Private properties
 
     private let locationLabel: UILabel = {
         let label = UILabel()
@@ -41,7 +45,6 @@ final class WeatherCell: UITableViewCell {
         label.textColor = .mainTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 15, weight: .light)
-        
         return label
     }()
 
@@ -52,6 +55,8 @@ final class WeatherCell: UITableViewCell {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
+    
+    // MARK: - Initializers
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -62,6 +67,8 @@ final class WeatherCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    // MARK: - Public methods
 
     func setupCell(with viewModel: WeatherCellViewModelProtocol) {
         if viewModel.cityId == 0 {
@@ -74,6 +81,8 @@ final class WeatherCell: UITableViewCell {
         tempLabel.text = viewModel.temp
         weatherIcon.image = viewModel.weatherIcon
     }
+
+    // MARK: - Private methods
 
     private func setupConstraints() {
         contentView.addSubview(locationLabel)

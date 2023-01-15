@@ -17,7 +17,8 @@ struct City: Codable, Identifiable, Equatable {
     let sunset: Int?
     var id: Int?
 
-    init(name: String? = nil, coord: Coord? = nil, country: String? = nil, population: Int? = nil, timezone: Int? = nil, sunrise: Int? = nil, sunset: Int? = nil, id: Int) {
+    init(name: String? = nil, coord: Coord? = nil, country: String? = nil, population: Int? = nil,
+         timezone: Int? = nil, sunrise: Int? = nil, sunset: Int? = nil, id: Int) {
         self.name = name
         self.coord = coord
         self.country = country
