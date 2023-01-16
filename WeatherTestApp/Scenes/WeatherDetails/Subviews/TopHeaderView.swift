@@ -38,10 +38,11 @@ protocol TopHeaderViewProtocol {
 
 final class TopHeaderView: UIView, TopHeaderViewProtocol {
 
-    private let cityNameLabel = makeLabel(.systemFont(ofSize: 34))
-    private let tempLabel = makeLabel(.systemFont(ofSize: 96, weight: .thin))
-    private let conditionLabel = makeLabel(.systemFont(ofSize: 20))
-    private let hiLowLabel = makeLabel(.systemFont(ofSize: 20, weight: .light))
+    private let cityNameLabel = UILabel.makeLabel(type: .extraLarge)
+    private let tempLabel = UILabel.makeLabel(type: .custom(info: (font: .systemFont(ofSize: 96, weight: .thin),
+                                                                   color: .white)))
+    private let conditionLabel = UILabel.makeLabel(type: .regular)
+    private let hiLowLabel = UILabel.makeLabel(type: .regular)
 
     private let shortInfoLabel: UILabel = {
         let label = UILabel()
@@ -94,32 +95,24 @@ final class TopHeaderView: UIView, TopHeaderViewProtocol {
     }
 }
 
-extension TopHeaderView {
-    private class func makeLabel(_ font: UIFont) -> UILabel {
-        let label = UILabel()
-        label.textColor = .white
-        label.font = font
-        label.dropShadow(width: 5)
-        return label
-    }
-}
-
 extension TopHeaderView: UIScrollViewDelegate {
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let distance = scrollView.contentOffset.y
-        handleFrameSize(scrollDistance: distance)
-        handleTopConstraint(scrollDistance: distance)
+        handleFrameSize(scrollDistance: scrollView.contentOffset.y)
+        handleTopConstraint(scrollDistance: scrollView.contentOffset.y)
+        if frame.height > HeaderConstants.smallHeight, frame.height < HeaderConstants.baseHeight {
+            scrollView.contentOffset.y = 0
+        }
         handleOpacity()
     }
 
     private func handleOpacity() {
-        mainStack.arrangedSubviews
+        #warning("try to remove cycle")
+       mainStack.arrangedSubviews
             .dropFirst()
             .map { $0 }
             .forEach { view in
-                let viewMaxYDimension = view.frame.maxY
-                var diff = frame.height - viewMaxYDimension
+                var diff = frame.height - view.frame.maxY
                 let step: CGFloat = 1 / HeaderConstants.changeOpacityDistance
 
                 if view.tag != 100 {
@@ -132,15 +125,20 @@ extension TopHeaderView: UIScrollViewDelegate {
             }
     }
 
+    private func handleFrameSize(scrollViewY: CGFloat) {
+
+    }
+
     private func handleFrameSize(scrollDistance: CGFloat) {
-        if scrollDistance > 0, frame.height > HeaderConstants.smallHeight {
+        if scrollDistance > 0 {
             frame.size.height = max(frame.height - scrollDistance, HeaderConstants.smallHeight)
-        } else if scrollDistance < 0, frame.height < HeaderConstants.baseHeight {
+        } else {
             frame.size.height = min(frame.height - scrollDistance, HeaderConstants.baseHeight)
         }
     }
 
     private func handleTopConstraint(scrollDistance: CGFloat) {
+//        #warning("convert to snapkit")
         guard let topConstraint = constraints.first(where: { $0.firstAttribute == .top && $0.secondAttribute == .top })
         else { return }
         if scrollDistance > 0, topConstraint.constant > HeaderConstants.smallTopInset {
