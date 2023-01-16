@@ -15,15 +15,16 @@ import UIKit
 protocol DetailsPresentationLogic {
     func presentForecast(response: Details.ShowForecast.Response)
     func presentError(response: Details.HandleError.Response)
+    func presentCurrentWeather(response: Details.ShowCurrentWeather.Response)
 }
 
 class DetailsPresenter: DetailsPresentationLogic {
-
     weak var viewController: DetailsDisplayLogic?
 
     private let formatter = DateFormatter()
 
     func presentForecast(response: Details.ShowForecast.Response) {
+        print("DAILY \(response.forecast.list.map { $0.dtTxt })")
         let forecast = response.forecast
         // take only 8 first values due to each value is 3 hours forecast. 24 hours total coverege
         let dailyForecast = forecast.list.prefix(8).map { $0 }
@@ -34,32 +35,50 @@ class DetailsPresenter: DetailsPresentationLogic {
         let description = forecast.list.first?.weather.first?.main ?? "unknown"
 
         // MARK: HeaderViewModel
-        let headerViewModel = HeaderViewModel(cityName: forecast.city.name ?? "",
-                                              temp: getFormattedTemp(forecast.list.first?.main.temp ?? 0),
-                                              conditionDescription: description,
-                                              hiTemp: getFormattedTemp(minMaxTempForDay.max),
-                                            lowTemp: getFormattedTemp(minMaxTempForDay.min))
+
+//        let headerViewModel = HeaderViewModel(cityName: forecast.city.name ?? "",
+//                                              temp: getFormattedTemp(forecast.list.first?.main.temp ?? 0),
+//                                              conditionDescription: description,
+//                                              hiTemp: getFormattedTemp(minMaxTempForDay.max),
+//                                              lowTemp: getFormattedTemp(minMaxTempForDay.min))
+
         // MARK: HourlyViewModels
+
         let hourlyViewModels = dailyForecast.map { daily in
             HourlyCellViewModel(timeTitle: getTimeInAMPM(from: daily.dtTxt, timezoneShift: forecast.city.timezone),
                                 iconName: String(daily.weather.first?.icon?.dropLast() ?? ""),
-                                tempTitle: getFormattedTemp(daily.main.temp ?? 0))
+                                tempTitle: getFormattedTemp(daily.main.temp ?? 0, isDeegreeSign: false))
         }
 
-        //MARK: DailyViewModels
+        // MARK: DailyViewModels
+
         let dailyViewModels = makeDailyViewModels(from: forecast)
 
         let miscViewModel = makeMiscInfoViewModel(from: forecast)
 
-        let viewModel = Details.ShowForecast.ViewModel(headerViewModel: headerViewModel,
-                                                       hourlyForecastViewModels: hourlyViewModels,
-                                                       dailyForecastViewModels: dailyViewModels,
+        let viewModel = Details.ShowForecast.ViewModel(hourlyForecastViewModels: hourlyViewModels,
+                                                    dailyForecastViewModels: dailyViewModels,
                                                        miscInfoViewModel: miscViewModel)
         viewController?.displayDetailedForecast(viewModel: viewModel)
     }
 
     func presentError(response: Details.HandleError.Response) {
         #warning("continue")
+    }
+
+    func presentCurrentWeather(response: Details.ShowCurrentWeather.Response) {
+
+        let temp = getFormattedTemp(response.weather.main?.temp ?? 0)
+        let hiTemp = getFormattedTemp(response.weather.main?.tempMax ?? 0)
+        let loTemp = getFormattedTemp(response.weather.main?.tempMin ?? 0)
+        guard let description = response.weather.weather?.first?.main?.description else { return }
+        let headerViewModel = HeaderViewModel(cityName: response.weather.name ?? "--",
+                                              temp: temp,
+                                              conditionDescription: description,
+                                              hiTemp: hiTemp,
+                                              lowTemp: loTemp)
+        let viewModel = Details.ShowCurrentWeather.ViewModel(headerViewModel: headerViewModel)
+        viewController?.displayCurrentWeather(viewModel: viewModel)
     }
 
     private func makeMiscInfoViewModel(from forecast: DailyForecast) -> MiscInfoViewModelProtocol {
@@ -153,23 +172,18 @@ class DetailsPresenter: DetailsPresentationLogic {
         return formatter.string(from: date)
     }
 
-    private func getForecastForCurrentDay(from forecast: DailyForecast) -> [Hourly] {
-        let days = Dictionary(grouping: forecast.list) { getDayName(from: $0) }
-            .sorted { $0.value.first?.dt ?? 0 < $1.value.first?.dt ?? 0 }
-        guard let first = days.first?.value else { return [] }
-        return first
-    }
-
     private func makeDailyViewModels(from forecast: DailyForecast) -> [DayForecastViewModel] {
-        Dictionary(grouping: forecast.list) { getDayName(from: $0) }
+        let dict = Dictionary(grouping: forecast.list) { getDayName(from: $0.dtTxt, timezoneShift: forecast.city.timezone) }
             .sorted { $0.value.first?.dt ?? 0 < $1.value.first?.dt ?? 0 }
+        return dict
             .reduce(into: [DayForecastViewModel]()) { partialResult, element in
+                let index = dict.firstIndex(where: { $0.key == element.key })
                 let temps = getMinMax(from: element.value)
                 let maxTemp = getFormattedTemp(temps.max)
                 let minTemp = getFormattedTemp(temps.min)
                 let icon = getWeatherIconForDay(from: element.value)
                 let pop = getPrecicipationAvarage(from: element.value)
-                let viewModel = DayForecastViewModel(dayName: element.key,
+                let viewModel = DayForecastViewModel(dayName: index == 0 ? "Today" : element.key,
                                                      iconName: icon,
                                                      precipitationTitle: pop,
                                                      dayTemp: maxTemp,
@@ -187,19 +201,30 @@ class DetailsPresenter: DetailsPresentationLogic {
 
     // Find most frequent weather icon condition.
     private func getWeatherIconForDay(from dailyForecast: [Hourly]) -> String {
-        let iconName = dailyForecast.reduce(into: String()) { partialResult, daily in
+        let iconName = dailyForecast.reduce(into: String()) { partialResult, _ in
             partialResult = Dictionary(grouping: dailyForecast) { $0.weather.first?.icon }
-                            .sorted { $0.value.count >  $1.value.count }
-                            .first?.value.first?.weather.first?.icon ?? ""
+                .sorted { $0.value.count > $1.value.count }
+                .first?.value.first?.weather.first?.icon ?? ""
         }
         return String(iconName.dropLast())
     }
 
-    private func getDayName(from hourlyForecast: Hourly) -> String {
+    private func getDayName(from time: String?, timezoneShift: Int?) -> String {
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        guard let date = formatter.date(from: hourlyForecast.dtTxt ) else { return "Day" }
+        guard
+            let time,
+            let timezoneShift,
+            let date = formatter.date(from: time)?.addingTimeInterval(Double(timezoneShift))
+        else {
+            return "--"
+        }
         formatter.dateFormat = "EEEE"
-        return formatter.string(from: date)
+        let str = formatter.string(from: date)
+        return str
+//        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+//        guard let date = formatter.date(from: hourlyForecast.dtTxt)?.addingTimeInterval(Double(timeZoneShift!)) else { return "Day" }
+//        formatter.dateFormat = "EEEE"
+//        return formatter.string(from: date)
     }
 
     // This is needed because API sends min and max temps for only some cities. In all other cases they are equal
@@ -211,7 +236,6 @@ class DetailsPresenter: DetailsPresentationLogic {
     }
 
     private func getTimeInAMPM(from time: String?, timezoneShift: Int?) -> String {
-        print("time \(time)")
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         guard
             let time,

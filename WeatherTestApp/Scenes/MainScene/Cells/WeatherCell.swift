@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 protocol WeatherCellViewModelProtocol {
     var cityName: String { get }
@@ -23,14 +24,8 @@ final class WeatherCell: UITableViewCell {
 
     // MARK: - Private properties
 
-    private let locationLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .mainTextColor
-        label.numberOfLines = 1
-        label.font = .systemFont(ofSize: 25, weight: .semibold)
-        return label
-    }()
+    private let locationLabel = UILabel.makeLabel(type: .large)
+    private let topText = UILabel.makeLabel(type: .small)
 
     private let tempLabel: UILabel = {
         let label = UILabel()
@@ -40,13 +35,6 @@ final class WeatherCell: UITableViewCell {
         return label
     }()
 
-    private let topText: UILabel = {
-        let label = UILabel()
-        label.textColor = .mainTextColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = .systemFont(ofSize: 15, weight: .light)
-        return label
-    }()
 
     private var weatherIcon: UIImageView = {
         let imageView = UIImageView()
@@ -90,19 +78,25 @@ final class WeatherCell: UITableViewCell {
         contentView.addSubview(topText)
         contentView.addSubview(weatherIcon)
 
-        locationLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20).isActive = true
-        locationLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 38).isActive = true
-        locationLabel.trailingAnchor.constraint(equalTo: weatherIcon.leadingAnchor, constant: -16).isActive = true
+        locationLabel.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(20)
+            make.top.equalToSuperview().offset(38)
+        }
 
-        tempLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20).isActive = true
-        tempLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10).isActive = true
+        tempLabel.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().inset(20)
+            make.bottom.equalToSuperview().inset(10)
+        }
 
-        topText.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20).isActive = true
-        topText.bottomAnchor.constraint(equalTo: locationLabel.topAnchor, constant: 3).isActive = true
+        topText.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(20)
+            make.bottom.equalTo(locationLabel.snp.top).offset(3)
+        }
 
-        weatherIcon.widthAnchor.constraint(equalToConstant: 50).isActive = true
-        weatherIcon.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        weatherIcon.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -141).isActive = true
-        weatherIcon.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -13).isActive = true
+        weatherIcon.snp.makeConstraints { make in
+            make.width.height.equalTo(50)
+            make.trailing.equalToSuperview().inset(141)
+            make.bottom.equalToSuperview().inset(13)
+        }
     }
 }

@@ -33,7 +33,11 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
 
     func loadForecast() {
         guard let weather else { return }
-        #warning("continue")
+
+        // Show what we have right now
+        let response = Details.ShowCurrentWeather.Response(weather: weather)
+        presenter?.presentCurrentWeather(response: response)
+        
         let city = City(coord: weather.coord, id: weather.internalId ?? 0)
         networkService.fetchDailyForecast(for: city) { [unowned self] result in
             switch result {

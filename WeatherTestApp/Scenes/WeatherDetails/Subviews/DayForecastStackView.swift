@@ -8,10 +8,12 @@
 import UIKit
 
 protocol DayForecastStackViewModelProtocol {
-    var dayViewModel: [DayForecastViewModelProtocol] { get }
+    var daysForecastViewModels: [DayForecastViewModelProtocol] { get }
 }
 
 final class DayForecastStackView: UIStackView {
+
+    // MARK: - Initializers
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -26,8 +28,10 @@ final class DayForecastStackView: UIStackView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func setup(viewModel: [DayForecastViewModelProtocol]) {
-        for viewModel in viewModel {
+    // MARK: - Public Methods
+
+    func setup(viewModels: [DayForecastViewModelProtocol]) {
+        for viewModel in viewModels {
             let dayRow = DayForecastView()
             dayRow.setup(viewModel: viewModel)
             addArrangedSubview(dayRow)

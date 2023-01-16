@@ -6,8 +6,10 @@
 //
 
 import UIKit
+import SnapKit
 
 struct HeaderConstants {
+
     static let baseHeight: CGFloat = 326
     static let smallHeight: CGFloat = 69
 
@@ -39,7 +41,7 @@ final class TopHeaderView: UIView, TopHeaderViewProtocol {
     private let cityNameLabel = makeLabel(.systemFont(ofSize: 34))
     private let tempLabel = makeLabel(.systemFont(ofSize: 96, weight: .thin))
     private let conditionLabel = makeLabel(.systemFont(ofSize: 20))
-    private let hiLowLabel = makeLabel(.systemFont(ofSize: 20, weight: .thin))
+    private let hiLowLabel = makeLabel(.systemFont(ofSize: 20, weight: .light))
 
     private let shortInfoLabel: UILabel = {
         let label = UILabel()
@@ -49,6 +51,7 @@ final class TopHeaderView: UIView, TopHeaderViewProtocol {
         label.font = .systemFont(ofSize: 20)
         label.layer.opacity = 0
         label.tag = 100
+        label.dropShadow()
         return label
     }()
 
@@ -82,6 +85,7 @@ final class TopHeaderView: UIView, TopHeaderViewProtocol {
 
     private func setupConstraints() {
         addSubview(mainStack)
+
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: topAnchor, constant: HeaderConstants.fullTopInset),
             mainStack.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -95,6 +99,7 @@ extension TopHeaderView {
         let label = UILabel()
         label.textColor = .white
         label.font = font
+        label.dropShadow(width: 5)
         return label
     }
 }

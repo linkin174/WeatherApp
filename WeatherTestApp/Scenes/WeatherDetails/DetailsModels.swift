@@ -15,14 +15,22 @@ import UIKit
 enum Details {
     // MARK: Use cases
 
-    enum ShowForecast {
+    enum ShowCurrentWeather {
+        struct Response {
+            let weather: CurrentWeather
+        }
 
+        struct ViewModel {
+            let headerViewModel: TopHeaderViewModelProtocol
+        }
+    }
+
+    enum ShowForecast {
         struct Response {
             let forecast: DailyForecast
         }
 
         struct ViewModel {
-            let headerViewModel: TopHeaderViewModelProtocol
             let hourlyForecastViewModels: [HourlyCellViewModelProtocol]
             let dailyForecastViewModels: [DayForecastViewModelProtocol]
             let miscInfoViewModel: MiscInfoViewModelProtocol

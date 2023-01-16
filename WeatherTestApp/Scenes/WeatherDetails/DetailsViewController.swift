@@ -13,10 +13,9 @@
 import UIKit
 import SnapKit
 
-#warning("fix details appearing")
-
 protocol DetailsDisplayLogic: AnyObject {
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel)
+    func displayCurrentWeather(viewModel: Details.ShowCurrentWeather.ViewModel)
 }
 
 final class DetailsViewController: UIViewController, DetailsDisplayLogic {
@@ -26,15 +25,16 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
     var interactor: DetailsBusinessLogic?
     var router: (NSObjectProtocol & DetailsRoutingLogic & DetailsDataPassing)?
 
-    // MARK: - Private properties
-
-    private var viewModel: Details.ShowForecast.ViewModel? {
-        didSet {
-            collectionView.reloadData()
-        }
-    }
-
     // MARK: Views
+
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.alwaysBounceVertical = true
+        scrollView.delegate = topHeaderView
+        scrollView.alpha = 0
+        return scrollView
+    }()
 
     private lazy var topHeaderView = TopHeaderView(frame: CGRect(x: 0,
                                                                  y: statusBarHeight,
@@ -43,30 +43,14 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
 
     private lazy var dayForecastStack = DayForecastStackView()
 
-    private lazy var scrollView: UIScrollView = {
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.alwaysBounceVertical = true
-        scrollView.delegate = topHeaderView
-        return scrollView
-    }()
 
-    private lazy var collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.sectionInset = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
-        layout.itemSize = CGSize(width: 45, height: 100)
-        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        view.showsHorizontalScrollIndicator = false
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.dataSource = self
-//        view.delegate = self
-        view.backgroundColor = .clear
-        view.register(HourlyCell.self, forCellWithReuseIdentifier: HourlyCell.reuseID)
-        return view
-    }()
+    private let collectionView = HourlyForecastCollectionView()
 
     private let miscInfoView = MiscInfoView()
+
+    private let firstSeparator = makeSeparator()
+
+    private let secondSeparator = makeSeparator()
 
     // MARK: Object lifecycle
 
@@ -77,7 +61,6 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        setup()
     }
 
     // MARK: - Setup Clean Code Design Pattern
@@ -97,27 +80,46 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
     }
 
     private func setupConstraints() {
+
+        view.addSubview(firstSeparator)
+        view.addSubview(secondSeparator)
+
         view.addSubview(topHeaderView)
         view.addSubview(collectionView)
         view.addSubview(scrollView)
         scrollView.addSubview(dayForecastStack)
         scrollView.addSubview(miscInfoView)
 
-        collectionView.topAnchor.constraint(equalTo: topHeaderView.bottomAnchor).isActive = true
-        collectionView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-        collectionView.heightAnchor.constraint(equalToConstant: 116).isActive = true
+        firstSeparator.snp.makeConstraints { make in
+            make.width.equalToSuperview()
+            make.height.equalTo(0.5)
+            make.top.equalTo(topHeaderView.snp.bottom)
+        }
 
-        scrollView.topAnchor.constraint(equalTo: collectionView.bottomAnchor).isActive = true
-        scrollView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-        scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -30).isActive = true
+        collectionView.snp.makeConstraints { make in
+            make.top.equalTo(firstSeparator.snp.bottom)
+            make.width.equalToSuperview()
+            make.height.equalTo(116)
+        }
 
-        dayForecastStack.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
-        dayForecastStack.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -40).isActive = true
-        dayForecastStack.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor).isActive = true
-//        dayForecastStack.heightAnchor.constraint(equalToConstant: CGFloat((viewModel?.dailyForecastViewModels.count ?? 0) * 25)).isActive = true
-        #warning("fix this")
-        print(viewModel?.dailyForecastViewModels.count)
-        dayForecastStack.heightAnchor.constraint(equalToConstant: 181).isActive = true
+        secondSeparator.snp.makeConstraints { make in
+            make.top.equalTo(collectionView.snp.bottom)
+            make.width.equalToSuperview()
+            make.height.equalTo(0.5)
+        }
+
+        scrollView.snp.makeConstraints { make in
+            make.top.equalTo(secondSeparator.snp.bottom)
+            make.width.equalToSuperview()
+            make.bottom.equalToSuperview().inset(30)
+        }
+
+        dayForecastStack.snp.makeConstraints { make in
+            make.top.equalTo(collectionView.snp.bottom).offset(15)
+            make.width.equalToSuperview()
+            make.centerX.equalToSuperview()
+            make.height.equalTo(181)
+        }
 
         miscInfoView.snp.makeConstraints { make in
             make.top.equalTo(dayForecastStack.snp.bottom).offset(15)
@@ -127,48 +129,46 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
         }
     }
 
+    private func animateViews() {
+        collectionView.fadeIn(duration: 1)
+        firstSeparator.fadeIn(duration: 1)
+        scrollView.fadeIn(duration: 1)
+        secondSeparator.fadeIn(duration: 1)
+    }
+
+    private class func makeSeparator() -> UIView {
+        let view = UIView()
+        view.backgroundColor = .white.withAlphaComponent(0.5)
+        view.alpha = 0
+        return view
+    }
+
     // MARK: - View lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = #colorLiteral(red: 0.2492019534, green: 0.5160208344, blue: 0.8688297868, alpha: 1)
-        loadData()
-        setupConstraints()
         navigationItem.largeTitleDisplayMode = .never
-    }
-
-    override func viewWillLayoutSubviews() {
-        super.viewWillLayoutSubviews()
-//        setupConstraints()
+        setupConstraints()
+        loadData()
     }
 
     // MARK: - request data from DetailsInteractor
 
-    func loadData() {
+    private func loadData() {
         interactor?.loadForecast()
     }
 
     // MARK: - display view model from DetailsPresenter
 
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel) {
-        view.layoutIfNeeded()
-        self.viewModel = viewModel
-        topHeaderView.setup(viewModel: viewModel.headerViewModel)
-        dayForecastStack.setup(viewModel: viewModel.dailyForecastViewModels)
+        dayForecastStack.setup(viewModels: viewModel.dailyForecastViewModels)
         miscInfoView.setup(viewModel: viewModel.miscInfoViewModel)
-    }
-}
-
-extension DetailsViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        viewModel?.hourlyForecastViewModels.count ?? 0
+        collectionView.setup(with: viewModel.hourlyForecastViewModels)
+        animateViews()
     }
 
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HourlyCell.reuseID, for: indexPath) as? HourlyCell else { return UICollectionViewCell() }
-        if let vm = viewModel?.hourlyForecastViewModels[indexPath.item] {
-            cell.setup(viewModel: vm)
-        }
-        return cell
+    func displayCurrentWeather(viewModel: Details.ShowCurrentWeather.ViewModel) {
+        topHeaderView.setup(viewModel: viewModel.headerViewModel)
     }
 }

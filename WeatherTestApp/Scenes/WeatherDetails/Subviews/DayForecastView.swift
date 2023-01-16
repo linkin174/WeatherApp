@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 protocol DayForecastViewModelProtocol {
     var dayName: String { get }
@@ -17,13 +18,16 @@ protocol DayForecastViewModelProtocol {
 
 final class DayForecastView: UIView {
 
-    // MARK: Views
+    // MARK: - Views
+    #warning("complete static factory, refactor all of the code!!!")
+//    private let dayLbl = UILabel.makeLabel(type: .large)
 
     private let dayLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .white
         label.font = .systemFont(ofSize: 20)
+        label.dropShadow()
         return label
     }()
 
@@ -32,6 +36,7 @@ final class DayForecastView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
         view.clipsToBounds = true
+        view.dropShadow()
         return view
     }()
 
@@ -40,6 +45,7 @@ final class DayForecastView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = #colorLiteral(red: 0.4862208962, green: 0.8088949323, blue: 0.9760338664, alpha: 1)
         label.font = .systemFont(ofSize: 13, weight: .light)
+        label.dropShadow()
         return label
     }()
 
@@ -48,6 +54,7 @@ final class DayForecastView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .white
         label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.dropShadow()
         return label
     }()
 
@@ -56,8 +63,11 @@ final class DayForecastView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = #colorLiteral(red: 0.6233376265, green: 0.7574332356, blue: 0.9322997928, alpha: 1)
         label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.dropShadow()
         return label
     }()
+
+    // MARK: - Initializers
 
     init() {
         super.init(frame: .zero)
@@ -65,9 +75,12 @@ final class DayForecastView: UIView {
         setupConstraints()
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    // MARK: - Public Methods
 
     func setup(viewModel: DayForecastViewModelProtocol) {
         dayLabel.text = viewModel.dayName
@@ -77,6 +90,8 @@ final class DayForecastView: UIView {
         nightTempLabel.text = viewModel.nightTemp
     }
 
+    // MARK: - Private Methods
+
     private func setupConstraints() {
         addSubview(dayLabel)
         addSubview(iconImageView)
@@ -85,22 +100,30 @@ final class DayForecastView: UIView {
         addSubview(nightTempLabel)
 
         for subview in subviews {
-            subview.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
+            subview.snp.makeConstraints { make in
+                make.centerY.equalToSuperview()
+            }
         }
 
-//        heightAnchor.constraint(equalToConstant: 32).isActive = true
-        dayLabel.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        dayLabel.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(20)
+        }
 
-//        iconImageView.leadingAnchor.constraint(equalTo: dayLabel.leadingAnchor, constant: 152).isActive = true
-        iconImageView.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true
-        iconImageView.widthAnchor.constraint(equalToConstant: 30).isActive = true
-        iconImageView.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        iconImageView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.width.height.equalTo(30)
+        }
 
-        precipitationLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 9).isActive = true
+        precipitationLabel.snp.makeConstraints { make in
+            make.leading.equalTo(iconImageView.snp.trailing).offset(9)
+        }
 
-        nightTempLabel.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
+        nightTempLabel.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().inset(20)
+        }
 
-        dayTempLabel.trailingAnchor.constraint(equalTo: nightTempLabel.trailingAnchor, constant:  -50).isActive = true
-
+        dayTempLabel.snp.makeConstraints { make in
+            make.trailing.equalTo(nightTempLabel.snp.trailing).inset(50)
+        }
     }
 }

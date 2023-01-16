@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 protocol HourlyCellViewModelProtocol {
     var timeTitle: String { get }
@@ -18,8 +19,46 @@ protocol HourlyCellProtocol {
 }
 
 final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
+    // MARK: - Public Properteies
 
     static let reuseID = "hourlyCell"
+
+    // MARK: - Private Properties
+
+    private let timeLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 15)
+        label.dropShadow()
+        return label
+    }()
+
+    private let iconImageView: UIImageView = {
+        let view = UIImageView()
+        view.contentMode = .scaleAspectFit
+        view.clipsToBounds = true
+        view.dropShadow()
+        return view
+    }()
+
+    private let tempTitleLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 20, weight: .medium)
+        label.dropShadow()
+        return label
+    }()
+
+    private lazy var mainStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [timeLabel, iconImageView, tempTitleLabel])
+        stack.axis = .vertical
+        stack.distribution = .fillEqually
+        stack.alignment = .center
+        return stack
+    }()
+
+    // MARK: - Initializers
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -30,58 +69,28 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private let timeLabel: UILabel = {
-        let label = UILabel()
-//        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 15)
-        return label
-    }()
-
-    private let iconImageView: UIImageView = {
-        let view = UIImageView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.contentMode = .scaleAspectFit
-        view.clipsToBounds = true
-        return view
-    }()
-
-    private let tempTitleLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 20, weight: .medium)
-        return label
-    }()
-
-    private lazy var mainStack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [timeLabel, iconImageView, tempTitleLabel])
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.axis = .vertical
-        stack.distribution = .fillEqually
-        stack.alignment = .center
-        return stack
-    }()
+    // MARK: - Public Methods
 
     func setup(viewModel: HourlyCellViewModelProtocol) {
         timeLabel.text = viewModel.timeTitle
         iconImageView.image = UIImage(named: viewModel.iconName)
         tempTitleLabel.text = viewModel.tempTitle
+        print(viewModel)
     }
 
+    // MARK: - Private Methods
 
     private func setupConstraints() {
         contentView.addSubview(mainStack)
 
-        mainStack.centerXAnchor.constraint(equalTo: contentView.centerXAnchor).isActive = true
-        mainStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor).isActive = true
-        mainStack.widthAnchor.constraint(equalTo: contentView.widthAnchor).isActive = true
-//        mainStack.heightAnchor.constraint(equalToConstant: 100).isActive = true
+        mainStack.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+            make.width.equalToSuperview()
+        }
 
-        iconImageView.heightAnchor.constraint(equalToConstant: 30).isActive = true
-        iconImageView.widthAnchor.constraint(equalToConstant: 30).isActive = true
-        iconImageView.centerXAnchor.constraint(equalTo: mainStack.centerXAnchor).isActive = true
-        iconImageView.centerYAnchor.constraint(equalTo: mainStack.centerYAnchor).isActive = true
+        iconImageView.snp.makeConstraints { make in
+            make.width.height.equalTo(30)
 
+        }
     }
 }
