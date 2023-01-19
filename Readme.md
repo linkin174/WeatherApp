@@ -11,5 +11,5 @@
 ## Tap on city in the list to show detailed forecast for 5 days total
 ![IMG_3737](https://user-images.githubusercontent.com/23027718/213488116-51043412-50cd-4d87-8c5c-f3cab582e36f.PNG)
 
-The hourly forecast is presented in the form of three-hour segments
-Timestamp is showing time for location within its own timezone
+The hourly forecast is presented in the form of three-hour segments.
+Timestamp is showing time for location within its own timezone.
