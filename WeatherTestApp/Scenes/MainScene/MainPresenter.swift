@@ -79,12 +79,11 @@ final class MainPresenter: MainPresentationLogic {
 
     private func getFormattedTemp(_ temp: Double?) -> String {
         guard let temp else { return "--" }
-        if round(temp) == 0 {
-            // If temp is Zero ignore "-" sign and return 0
-            return NSString(format: "0%@" as NSString, "\u{00B0}") as String
-        } else {
-            let roundedTemp = String(format: "%.f", temp)
-            return NSString(format: "\(roundedTemp)%@" as NSString, "\u{00B0}") as String
-        }
+        let formatter = MeasurementFormatter()
+        formatter.numberFormatter.minimumFractionDigits = 0
+        formatter.numberFormatter.maximumFractionDigits = 0
+        let measurment = Measurement(value: temp, unit: UnitTemperature.celsius)
+        let string = formatter.string(from: measurment)
+        return String(string.dropLast(1))
     }
 }
