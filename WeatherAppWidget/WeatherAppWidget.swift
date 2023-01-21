@@ -27,7 +27,7 @@ struct Provider: TimelineProvider {
         let currentDate = Date()
         for hourOffset in 0 ..< 24 {
             let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = WeatherEntry(date: Date(),
+            let entry = WeatherEntry(date: entryDate,
                                      currentWeather: CurrentWeather(cityName: "Chelyabinsk", temp: -12, description: "Overccast clouds"))
             entries.append(entry)
         }
@@ -82,6 +82,10 @@ struct WeatherAppWidget: Widget {
         }
         .configurationDisplayName("Weather")
         .description("Display current weather")
+        .supportedFamilies([.systemSmall])
+        .onBackgroundURLSessionEvents { identifier, completion in
+
+        }
     }
 }
 

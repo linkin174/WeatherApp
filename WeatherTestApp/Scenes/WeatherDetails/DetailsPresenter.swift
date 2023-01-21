@@ -188,6 +188,8 @@ class DetailsPresenter: DetailsPresentationLogic {
 
     private func getFormattedTemp(_ temp: Double, isDeegreeSign: Bool = true) -> String {
         let formatter = MeasurementFormatter()
+        formatter.numberFormatter.maximumFractionDigits = 0
+        formatter.numberFormatter.minimumFractionDigits = 0
         let rounded = Double(Int(temp.rounded()))
         let measurement = Measurement(value: rounded, unit: UnitTemperature.celsius)
         let string = formatter.string(from: measurement)

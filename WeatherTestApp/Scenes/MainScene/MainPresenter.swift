@@ -80,6 +80,8 @@ final class MainPresenter: MainPresentationLogic {
     private func getFormattedTemp(_ temp: Double?) -> String {
         guard let temp else { return "--" }
         let formatter = MeasurementFormatter()
+        formatter.numberFormatter.maximumFractionDigits = 0
+        formatter.numberFormatter.minimumFractionDigits = 0
         let rounded = Double(Int(temp.rounded()))
         let measurment = Measurement(value: rounded, unit: UnitTemperature.celsius)
         let string = formatter.string(from: measurment)
