@@ -15,7 +15,6 @@ import UIKit
 protocol MainPresentationLogic {
     func presentWeather(response: MainScene.LoadWeather.Response)
     func presentError(response: MainScene.HandleError.Response)
-    func presentSearchResults(response: MainScene.SearchCities.Response)
 }
 
 final class MainPresenter: MainPresentationLogic {
@@ -26,35 +25,16 @@ final class MainPresenter: MainPresentationLogic {
     // MARK: - Presentation Logic
 
     func presentWeather(response: MainScene.LoadWeather.Response) {
-        let cellsViewModels = response.weather.map { currentWeather in
-            let icon = getWeatherIcon(from: currentWeather.weather.first?.icon)
-            return WeatherCellViewModel(cityName: currentWeather.name ?? "--",
-                                        weatherIcon: icon,
-                                        temp: getFormattedTemp(currentWeather.main.temp),
-                                        currentTime: getHoursFrom(currentWeather.timezone),
-                                        cityId: currentWeather.internalId ?? 0)
+        let cellsViewModels = makeWeatherCellViewModels(from: response.weather)
+        if response.places.isEmpty {
+            let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: [])
+            viewController?.displayCurrentWeather(viewModel: viewModel)
+        } else {
+            let placeCellViewModels = makePlaceCellViewModels(from: response.places)
+            let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels,
+                                                            placeCellViewModels: placeCellViewModels)
+            viewController?.displaySearchResults(viewModel: viewModel)
         }
-
-        let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: [])
-        viewController?.displayCurrentWeather(viewModel: viewModel)
-    }
-
-    func presentSearchResults(response: MainScene.SearchCities.Response) {
-        let cellsViewModels = response.filteredForecast.map { currentWeather in
-            let icon = getWeatherIcon(from: currentWeather.weather.first?.icon)
-            return WeatherCellViewModel(cityName: currentWeather.name ?? "--",
-                                        weatherIcon: icon,
-                                        temp: getFormattedTemp(currentWeather.main.temp),
-                                        currentTime: getHoursFrom(currentWeather.timezone),
-                                        cityId: currentWeather.internalId ?? 0)
-        }
-
-        let placesViewModels = response.places.map { PlaceCellViewModel(cityName: $0.name,
-                                                                        stateName: $0.state,
-                                                                        countryName: getCountryName(from: $0.country)) }
-
-        let viewModel = MainScene.LoadWeather.ViewModel(weatherCellViewModels: cellsViewModels, placeCellViewModels: placesViewModels)
-        viewController?.displaySearchResults(viewModel: viewModel)
     }
 
     func presentError(response: MainScene.HandleError.Response) {
@@ -64,6 +44,25 @@ final class MainPresenter: MainPresentationLogic {
     }
 
     // MARK: - Private methods
+
+    private func makeWeatherCellViewModels(from weather: [CurrentWeather]) -> [WeatherCellViewModelProtocol] {
+        weather.map { element in
+            let icon = getWeatherIcon(from: element.weather.first?.icon)
+            return WeatherCellViewModel(cityName: element.name ?? "--",
+                                        weatherIcon: icon,
+                                        temp: getFormattedTemp(element.main.temp),
+                                        currentTime: Date().shortTimeStyle(adding: Double(element.timezone)),
+                                        cityId: element.internalId ?? 0)
+        }
+    }
+
+    private func makePlaceCellViewModels(from places: [Place]) -> [PlaceCellViewModelRepresentable] {
+        places.map { element in
+            PlaceCellViewModel(cityName: element.name,
+                               stateName: element.state,
+                               countryName: getCountryName(from: element.country))
+        }
+    }
 
     private func getCountryName(from countryCode: String) -> String {
         let currentLocale = Locale.current
@@ -76,16 +75,6 @@ final class MainPresenter: MainPresentationLogic {
             let image = UIImage(named: String(codePrefix))
         else { return nil }
         return image
-    }
-
-    private func getHoursFrom(_ secondsGMT: Int?) -> String {
-        guard let secondsGMT else { return "12:00" }
-        let date = Date()
-        let timeZone = TimeZone(secondsFromGMT: secondsGMT)
-        let formatter = DateFormatter()
-        formatter.timeZone = timeZone
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
     }
 
     private func getFormattedTemp(_ temp: Double?) -> String {
