@@ -23,10 +23,6 @@ class DetailsPresenter: DetailsPresentationLogic {
 
     weak var viewController: DetailsDisplayLogic?
 
-    // MARK: - Private Properties
-
-    private let formatter = DateFormatter()
-
     // MARK: - Presentation Logic
     
     func presentCurrentWeather(response: Details.ShowCurrentWeather.Response) {
@@ -44,15 +40,10 @@ class DetailsPresenter: DetailsPresentationLogic {
     }
 
     func presentForecast(response: Details.ShowForecast.Response) {
-//        print("DAILY \(response.forecast.list.map { $0.dtTxt })")
         let forecast = response.forecast
-
         let hourlyViewModels = makeHourlyViewModels(from: forecast)
-
         let dailyViewModels = makeDailyViewModels(from: forecast)
-
         let miscViewModel = makeMiscInfoViewModel(from: response.currentweather, and: forecast.list.first)
-
         let viewModel = Details.ShowForecast.ViewModel(hourlyForecastViewModels: hourlyViewModels,
                                                        dailyForecastViewModels: dailyViewModels,
                                                        miscInfoViewModel: miscViewModel)
@@ -68,8 +59,8 @@ class DetailsPresenter: DetailsPresentationLogic {
 
     // MARK: - Private Methods
 
-    private func makeHourlyViewModels(from: DailyForecast, quantity: Int = 16) -> [HourlyCellViewModelProtocol] {
-        let forecastForPeriod = from.list.prefix(quantity).map { $0 }
+    private func makeHourlyViewModels(from: DailyForecast) -> [HourlyCellViewModelProtocol] {
+        let forecastForPeriod = from.list.prefix(16).map { $0 }
         return forecastForPeriod.map { hourly in
             HourlyCellViewModel(timeTitle: getTimeInAMPM(from: hourly.dtTxt, timezoneShift: from.city.timezone),
                                 iconName: String(hourly.weather.first?.icon?.dropLast() ?? ""),
@@ -82,8 +73,8 @@ class DetailsPresenter: DetailsPresentationLogic {
             .sorted { $0.value.first?.dt ?? 0 < $1.value.first?.dt ?? 0 }
             .reduce(into: [DayForecastViewModel]()) { partialResult, element in
                 let temps = getMinMax(from: element.value)
-                let maxTemp = getFormattedTemp(temps.max)
-                let minTemp = getFormattedTemp(temps.min)
+                let maxTemp = getFormattedTemp(temps.max, isDeegreeSign: false)
+                let minTemp = getFormattedTemp(temps.min, isDeegreeSign: false)
                 let icon = getWeatherIconForDay(from: element.value)
                 let pop = getPrecicipationAvarage(from: element.value)
                 let viewModel = DayForecastViewModel(dayName: element.key,
@@ -106,9 +97,9 @@ class DetailsPresenter: DetailsPresentationLogic {
             return text
         }
 
-        let sunriseTime = getTimeFromSecondsUTC(seconds: currentWeather.sys.sunrise)
+        let sunriseTime = Date().dateFrom(secondsUTC: currentWeather.sys.sunrise).shortTimeStyle()
 
-        let sunsetTime = getTimeFromSecondsUTC(seconds: currentWeather.sys.sunset)
+        let sunsetTime = Date().dateFrom(secondsUTC: currentWeather.sys.sunset).shortTimeStyle()
 
         var chanceOfPop: String {
             if let hourly {
@@ -191,13 +182,6 @@ class DetailsPresenter: DetailsPresentationLogic {
         return "\(direction) \(speedDesription)"
     }
 
-    private func getTimeFromSecondsUTC(seconds: Int?) -> String {
-        guard let seconds else { return "00:00" }
-        let date = Date(timeIntervalSince1970: Double(seconds))
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
-    }
-
     private func getPrecicipationAvarage(from dailyForecast: [Hourly]) -> String? {
         // Calculate avarage precipitation chance
         let pop = dailyForecast.map { $0.pop }
@@ -216,29 +200,13 @@ class DetailsPresenter: DetailsPresentationLogic {
     }
 
     private func getDayName(from time: String?, timezoneShift: Int?) -> String {
-        guard let date = getDate(from: time, timezoneShift: timezoneShift) else { return "--" }
-        formatter.dateFormat = "EEEE"
-        let str = formatter.string(from: date)
-        return str
+        guard let time, let timezoneShift else { return "--" }
+        return Date().dateFrom(string: time, timezoneShift: Double(timezoneShift))?.dayNameStyle() ?? "--"
     }
 
     private func getTimeInAMPM(from time: String?, timezoneShift: Int?) -> String {
-        guard let date = getDate(from: time, timezoneShift: timezoneShift) else { return "--" }
-        formatter.dateFormat = "ha"
-        let str = formatter.string(from: date)
-        return str
-    }
-
-    private func getDate(from string: String?, timezoneShift: Int?) -> Date? {
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        guard
-            let string,
-            let timezoneShift,
-            let date = formatter.date(from: string)?.addingTimeInterval(Double(timezoneShift))
-        else {
-            return nil
-        }
-        return date
+        guard let time, let timezoneShift else { return "--" }
+        return Date().dateFrom(string: time, timezoneShift: Double(timezoneShift))?.hourAMPMStyle() ?? "--"
     }
 
     // This is needed because API sends min and max temps for only some cities. In all other cases they are equal
@@ -250,12 +218,15 @@ class DetailsPresenter: DetailsPresentationLogic {
     }
 
     private func getFormattedTemp(_ temp: Double, isDeegreeSign: Bool = true) -> String {
-        if round(temp) == 0 {
-            // If temp is Zero ignore "-" sign and return 0
-            return NSString(format: "0%@" as NSString, "\u{00B0}") as String
+        let formatter = MeasurementFormatter()
+        formatter.numberFormatter.minimumFractionDigits = 0
+        formatter.numberFormatter.maximumFractionDigits = 0
+        let temp = Measurement(value: temp, unit: UnitTemperature.celsius)
+        let string = formatter.string(from: temp)
+        if isDeegreeSign {
+            return String(string.dropLast(1))
         } else {
-            let roundedTemp = String(format: "%.f", temp)
-            return NSString(format: "\(roundedTemp)%@" as NSString, "\u{00B0}") as String
+            return String(string.dropLast(2))
         }
     }
 }
