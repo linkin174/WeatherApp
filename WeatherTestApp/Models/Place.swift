@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PlaceElement: Codable {
+struct Place: Codable {
     let name: String
     let lat: Double
     let lon: Double

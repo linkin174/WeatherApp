@@ -9,13 +9,17 @@ import UIKit
 
 final class HourlyForecastCollectionView: UICollectionView {
 
-    private var cells: [HourlyCellViewModelProtocol]? 
+    // MARK: - Private Properties
+
+    private var cells: [HourlyCellViewModelProtocol]?
+    
+    // MARK: - Initializers
 
     init() {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.sectionInset = UIEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
-        layout.itemSize = CGSize(width: 45, height: 92)
+        layout.sectionInset = UIEdgeInsets(top: 6, left: 20, bottom: 6, right: 20)
+        layout.itemSize = CGSize(width: 45, height: 104)
         super.init(frame: .zero, collectionViewLayout: layout)
         showsHorizontalScrollIndicator = false
         backgroundColor = .clear
@@ -29,11 +33,15 @@ final class HourlyForecastCollectionView: UICollectionView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Public Methods
+
     func setup(with cells: [HourlyCellViewModelProtocol]) {
         self.cells = cells
         reloadData()
     }
 }
+
+// MARK: - CollectionView Delegate
 
 extension HourlyForecastCollectionView: UICollectionViewDataSource {
 

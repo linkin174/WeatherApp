@@ -24,17 +24,16 @@ final class WeatherCell: UITableViewCell {
 
     // MARK: - Private properties
 
-    private let locationLabel = UILabel.makeLabel(type: .large)
-    private let topText = UILabel.makeLabel(type: .small)
+    private let locationLabel = UILabel.makeLabel(type: .large, withShadow: false)
+    private let topText = UILabel.makeLabel(type: .small, withShadow: false)
 
     private let tempLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .mainTextColor
+        label.textColor = .white
         label.font = .systemFont(ofSize: 50, weight: .ultraLight)
         return label
     }()
-
 
     private var weatherIcon: UIImageView = {
         let imageView = UIImageView()

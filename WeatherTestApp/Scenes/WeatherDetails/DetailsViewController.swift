@@ -10,16 +10,16 @@
 //  see http://clean-swift.com
 //
 
-import UIKit
 import SnapKit
+import UIKit
 
 protocol DetailsDisplayLogic: AnyObject {
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel)
     func displayCurrentWeather(viewModel: Details.ShowCurrentWeather.ViewModel)
+    func displayError(viewModel: Details.HandleError.ViewModel)
 }
 
-final class DetailsViewController: UIViewController, DetailsDisplayLogic {
-
+final class DetailsViewController: UIViewController {
     // MARK: - Public properties
 
     var interactor: DetailsBusinessLogic?
@@ -29,10 +29,10 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
 
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.alwaysBounceVertical = true
         scrollView.delegate = topHeaderView
         scrollView.alpha = 0
+        scrollView.showsVerticalScrollIndicator = false
         return scrollView
     }()
 
@@ -43,24 +43,33 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
 
     private lazy var dayForecastStack = DayForecastStackView()
 
-
     private let collectionView = HourlyForecastCollectionView()
 
     private let miscInfoView = MiscInfoView()
 
     private let firstSeparator = makeSeparator()
-
     private let secondSeparator = makeSeparator()
 
-    // MARK: Object lifecycle
+    // MARK: - Initializers
 
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         setup()
+        navigationController?.navigationBar.prefersLargeTitles = false
     }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+    }
+
+    // MARK: - View lifecycle
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = #colorLiteral(red: 0.2492019534, green: 0.5160208344, blue: 0.8688297868, alpha: 1)
+        navigationItem.largeTitleDisplayMode = .never
+        setupConstraints()
+        loadData()
     }
 
     // MARK: - Setup Clean Code Design Pattern
@@ -79,21 +88,30 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
         router.dataStore = interactor
     }
 
+    // MARK: - Requesting Logic
+
+    private func loadData() {
+        interactor?.loadForecast()
+    }
+
+
+
+    // MARK: - Private Methods
+
     private func setupConstraints() {
-
-        view.addSubview(firstSeparator)
-        view.addSubview(secondSeparator)
-
         view.addSubview(topHeaderView)
+        view.addSubview(firstSeparator)
         view.addSubview(collectionView)
+        view.addSubview(secondSeparator)
         view.addSubview(scrollView)
+
         scrollView.addSubview(dayForecastStack)
         scrollView.addSubview(miscInfoView)
 
         firstSeparator.snp.makeConstraints { make in
-            make.width.equalToSuperview()
-            make.height.equalTo(0.5)
             make.top.equalTo(topHeaderView.snp.bottom)
+            make.width.equalToSuperview()
+            make.height.equalTo(1)
         }
 
         collectionView.snp.makeConstraints { make in
@@ -105,17 +123,18 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
         secondSeparator.snp.makeConstraints { make in
             make.top.equalTo(collectionView.snp.bottom)
             make.width.equalToSuperview()
-            make.height.equalTo(0.5)
+            make.height.equalTo(1)
         }
 
         scrollView.snp.makeConstraints { make in
             make.top.equalTo(secondSeparator.snp.bottom)
             make.width.equalToSuperview()
-            make.bottom.equalToSuperview().inset(30)
+            make.bottom.equalTo(view.snp.bottomMargin)
         }
 
+        
         dayForecastStack.snp.makeConstraints { make in
-            make.top.equalTo(collectionView.snp.bottom).offset(15)
+            make.top.equalToSuperview().offset(15)
             make.width.equalToSuperview()
             make.centerX.equalToSuperview()
             make.height.equalTo(181)
@@ -123,17 +142,18 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
 
         miscInfoView.snp.makeConstraints { make in
             make.top.equalTo(dayForecastStack.snp.bottom).offset(15)
-            make.centerX.equalToSuperview()
+            make.bottom.equalToSuperview().inset(30)
             make.width.equalToSuperview()
-            make.bottom.equalToSuperview()
+            make.centerX.equalToSuperview()
+            make.height.equalTo(355)
         }
     }
 
     private func animateViews() {
-        collectionView.fadeIn(duration: 1)
-        firstSeparator.fadeIn(duration: 1)
-        scrollView.fadeIn(duration: 1)
-        secondSeparator.fadeIn(duration: 1)
+        collectionView.fadeIn(duration: 0.6)
+        firstSeparator.fadeIn(duration: 0.6)
+        secondSeparator.fadeIn(duration: 0.6)
+        scrollView.fadeIn(duration: 0.6)
     }
 
     private class func makeSeparator() -> UIView {
@@ -142,25 +162,10 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
         view.alpha = 0
         return view
     }
+}
 
-    // MARK: - View lifecycle
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = #colorLiteral(red: 0.2492019534, green: 0.5160208344, blue: 0.8688297868, alpha: 1)
-        navigationItem.largeTitleDisplayMode = .never
-        setupConstraints()
-        loadData()
-    }
-
-    // MARK: - request data from DetailsInteractor
-
-    private func loadData() {
-        interactor?.loadForecast()
-    }
-
-    // MARK: - display view model from DetailsPresenter
-
+extension DetailsViewController: DetailsDisplayLogic {
+    // MARK: - Display Logic
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel) {
         dayForecastStack.setup(viewModels: viewModel.dailyForecastViewModels)
         miscInfoView.setup(viewModel: viewModel.miscInfoViewModel)
@@ -170,5 +175,12 @@ final class DetailsViewController: UIViewController, DetailsDisplayLogic {
 
     func displayCurrentWeather(viewModel: Details.ShowCurrentWeather.ViewModel) {
         topHeaderView.setup(viewModel: viewModel.headerViewModel)
+    }
+
+    func displayError(viewModel: Details.HandleError.ViewModel) {
+        let retryAction = UIAlertAction(title: "Retry", style: .default) { _ in
+            self.loadData()
+        }
+        showAlert(title: "OOPS!", message: viewModel.errorMessage, actions: [retryAction])
     }
 }

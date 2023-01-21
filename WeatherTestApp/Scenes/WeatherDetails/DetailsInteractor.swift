@@ -22,47 +22,39 @@ protocol DetailsDataStore {
 
 class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
 
+    // MARK: - Public Properties
+
     var weather: CurrentWeather?
     var presenter: DetailsPresentationLogic?
 
+    // MARK: - Private Properties
+
     private let networkService: NetworkServiceProtocol
+
+    // MARK: - Initializers
 
     init(networkService: NetworkServiceProtocol) {
         self.networkService = networkService
     }
 
+    // MARK: Interaction Logic
+
     func loadForecast() {
         guard let weather else { return }
-
-        // Show what we have right now
+        // For displaying header
         let response = Details.ShowCurrentWeather.Response(weather: weather)
         presenter?.presentCurrentWeather(response: response)
-        
+        // Loading daily information
         let city = City(coord: weather.coord, id: weather.internalId ?? 0)
         networkService.fetchDailyForecast(for: city) { [unowned self] result in
             switch result {
             case .success(let forecast):
-                let response = Details.ShowForecast.Response(forecast: forecast)
+                let response = Details.ShowForecast.Response(forecast: forecast, currentweather: weather)
                 presenter?.presentForecast(response: response)
             case .failure(let error):
                 let response = Details.HandleError.Response(error: error)
                 presenter?.presentError(response: response)
             }
         }
-//        let response = Details.ShowForecast.Response(forecast: weather)
-//            presenter?.presentForecast(response: response)
-
-//        let city = City(coord: weather?.coord)
-//        networkService.fetchDailyForecast(for: city) { [weak self] result in
-//            switch result {
-//            case .success(let success):
-//                let response = Details.ShowForecast.Response(forecast: success)
-//                self?.presenter?.presentForecast(response: response)
-//                print(response.forecast.list.map {$0.dtTxt})
-//            case .failure(let failure):
-//                let response = Details.HandleError.Response(error: failure)
-//                self?.presenter?.presentError(response: response)
-//            }
-//        }
     }
 }

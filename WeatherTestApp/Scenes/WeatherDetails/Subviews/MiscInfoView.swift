@@ -12,7 +12,7 @@ protocol MiscInfoViewModelProtocol {
     var weatherDescription: String { get }
     var sunriseTime: String { get }
     var sunsetTime: String { get }
-    var chanceOfPop: String? { get }
+    var chanceOfPop: String { get }
     var humidity: String { get }
     var wind: String { get }
     var feelsLike: String { get }

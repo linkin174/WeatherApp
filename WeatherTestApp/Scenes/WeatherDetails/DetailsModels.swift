@@ -28,6 +28,7 @@ enum Details {
     enum ShowForecast {
         struct Response {
             let forecast: DailyForecast
+            let currentweather: CurrentWeather
         }
 
         struct ViewModel {
@@ -77,8 +78,7 @@ struct MiscInfoViewModel: MiscInfoViewModelProtocol {
     var weatherDescription: String
     var sunriseTime: String
     var sunsetTime: String
-    var chanceOfPop: String?
-    var chanceOfSnow: String?
+    var chanceOfPop: String
     var humidity: String
     var wind: String
     var feelsLike: String

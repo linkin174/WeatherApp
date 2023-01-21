@@ -22,7 +22,6 @@ protocol MainDataPassing {
 
 final class MainRouter: NSObject, MainRoutingLogic, MainDataPassing {
 
-
     // MARK: - Public properties
 
     var dataStore: MainDataStore?

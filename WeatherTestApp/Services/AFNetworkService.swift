@@ -11,7 +11,7 @@ import Foundation
 protocol NetworkServiceProtocol {
     func fetchCurrentWeather(for cities: [City], completion: @escaping (Result<[CurrentWeather], AFError>) -> Void)
     func fetchDailyForecast(for city: City, completion: @escaping (Result<DailyForecast, AFError>) -> Void)
-    func fetchCities(searchString: String, completion: @escaping ([PlaceElement]) -> Void)
+    func fetchCities(searchString: String, completion: @escaping ([Place]) -> Void)
 }
 
 private enum API {
@@ -19,7 +19,17 @@ private enum API {
 }
 
 final class AFNetworkService: NetworkServiceProtocol {
-    // MARK: Public Methods
+    // MARK: - Private Properties
+
+    let decoder = JSONDecoder()
+
+    // MARK: - Initializers
+
+    init() {
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+    }
+
+    // MARK: - Public Methods
 
     func fetchCurrentWeather(for cities: [City], completion: @escaping (Result<[CurrentWeather], AFError>) -> Void) {
         let url = createURL(api: .weather, WeatherAPI.getWeather)
@@ -31,7 +41,7 @@ final class AFNetworkService: NetworkServiceProtocol {
             let parameters = makeParameters(for: city)
             AF.request(url, parameters: parameters)
                 .validate()
-                .responseDecodable(of: CurrentWeather.self) { response in
+                .responseDecodable(of: CurrentWeather.self, decoder: decoder) { response in
                     switch response.result {
                     case .success(var weather):
                         weather.internalId = city.id
@@ -54,25 +64,25 @@ final class AFNetworkService: NetworkServiceProtocol {
 
     func fetchDailyForecast(for city: City, completion: @escaping (Result<DailyForecast, AFError>) -> Void) {
         let url = createURL(api: .weather, WeatherAPI.getForecast)
-            let parameters = makeParameters(for: city)
-            AF.request(url, parameters: parameters)
-                .validate()
-                .responseDecodable(of: DailyForecast.self) { response in
-                    switch response.result {
-                    case .success(let dailyForecast):
-                        completion(.success(dailyForecast))
-                    case .failure(let error):
-                        completion(.failure(error))
-                    }
+        let parameters = makeParameters(for: city)
+        AF.request(url, parameters: parameters)
+            .validate()
+            .responseDecodable(of: DailyForecast.self, decoder: decoder) { response in
+                switch response.result {
+                case .success(let dailyForecast):
+                    completion(.success(dailyForecast))
+                case .failure(let error):
+                    completion(.failure(error))
                 }
+            }
     }
 
-    func fetchCities(searchString: String, completion: @escaping ([PlaceElement]) -> Void) {
+    func fetchCities(searchString: String, completion: @escaping ([Place]) -> Void) {
         let url = createURL(api: .geocoder, GeocoderAPI.searchCity)
         let parameters = makeParameters(for: searchString)
         AF.request(url, parameters: parameters)
             .validate()
-            .responseDecodable(of: [PlaceElement].self) { response in
+            .responseDecodable(of: [Place].self, decoder: decoder) { response in
                 switch response.result {
                 case .success(let searchedCities):
                     completion(searchedCities)
@@ -81,7 +91,7 @@ final class AFNetworkService: NetworkServiceProtocol {
             }
     }
 
-    // MARK: Private methods
+    // MARK: - Private methods
 
     private func makeParameters(for city: City) -> [String: String] {
         var parameters = [String: String]()

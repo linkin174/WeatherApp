@@ -19,17 +19,11 @@ protocol DayForecastViewModelProtocol {
 final class DayForecastView: UIView {
 
     // MARK: - Views
-    #warning("complete static factory, refactor all of the code!!!")
-//    private let dayLbl = UILabel.makeLabel(type: .large)
 
-    private let dayLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 20)
-        label.dropShadow()
-        return label
-    }()
+    private let dayLabel = UILabel.makeLabel(type: .regular)
+    private let dayTempLabel = UILabel.makeLabel(type: .regular)
+    private let precipitationLabel = UILabel.makeLabel(type: .custom(info: (font: .systemFont(ofSize: 13), color: #colorLiteral(red: 0.4862208962, green: 0.8088949323, blue: 0.9760338664, alpha: 1))))
+    private let nightTempLabel = UILabel.makeLabel(type: .custom(info: (font: .systemFont(ofSize: 20), color: #colorLiteral(red: 0.6233376265, green: 0.7574332356, blue: 0.9322997928, alpha: 1))))
 
     private let iconImageView: UIImageView = {
         let view = UIImageView()
@@ -38,33 +32,6 @@ final class DayForecastView: UIView {
         view.clipsToBounds = true
         view.dropShadow()
         return view
-    }()
-
-    private let precipitationLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = #colorLiteral(red: 0.4862208962, green: 0.8088949323, blue: 0.9760338664, alpha: 1)
-        label.font = .systemFont(ofSize: 13, weight: .light)
-        label.dropShadow()
-        return label
-    }()
-
-    private let dayTempLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 20, weight: .semibold)
-        label.dropShadow()
-        return label
-    }()
-
-    private let nightTempLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = #colorLiteral(red: 0.6233376265, green: 0.7574332356, blue: 0.9322997928, alpha: 1)
-        label.font = .systemFont(ofSize: 20, weight: .semibold)
-        label.dropShadow()
-        return label
     }()
 
     // MARK: - Initializers

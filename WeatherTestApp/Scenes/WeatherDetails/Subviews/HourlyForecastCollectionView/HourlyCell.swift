@@ -25,14 +25,8 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
 
     // MARK: - Private Properties
 
-    private let timeLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 15)
-        label.dropShadow()
-        return label
-    }()
+    private let timeLabel = UILabel.makeLabel(type: .small)
+    private let tempTitleLabel = UILabel.makeLabel(type: .regular)
 
     private let iconImageView: UIImageView = {
         let view = UIImageView()
@@ -42,13 +36,6 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
         return view
     }()
 
-    private let tempTitleLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 20, weight: .medium)
-        label.dropShadow()
-        return label
-    }()
 
     private lazy var mainStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [timeLabel, iconImageView, tempTitleLabel])
@@ -75,7 +62,6 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
         timeLabel.text = viewModel.timeTitle
         iconImageView.image = UIImage(named: viewModel.iconName)
         tempTitleLabel.text = viewModel.tempTitle
-        print(viewModel)
     }
 
     // MARK: - Private Methods
@@ -90,7 +76,6 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
 
         iconImageView.snp.makeConstraints { make in
             make.width.height.equalTo(30)
-
         }
     }
 }

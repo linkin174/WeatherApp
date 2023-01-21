@@ -8,12 +8,9 @@
 import UIKit
 
 extension UIColor {
+    
    class var mainBackground: UIColor {
         UIColor(named: "mainBG") ?? .black
-    }
-
-    class var mainTextColor: UIColor {
-        UIColor(named: "mainText") ?? .white
     }
 
     class var secondaryBackground: UIColor {

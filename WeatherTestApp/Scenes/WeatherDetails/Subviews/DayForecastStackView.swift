@@ -17,7 +17,6 @@ final class DayForecastStackView: UIStackView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        translatesAutoresizingMaskIntoConstraints = false
         axis = .vertical
         spacing = 8
         distribution = .fillEqually

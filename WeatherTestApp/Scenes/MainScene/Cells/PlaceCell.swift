@@ -24,21 +24,21 @@ final class PlaceCell: UITableViewCell {
 
     private let cityNameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .mainTextColor
+        label.textColor = .white
         label.font = .systemFont(ofSize: 16, weight: .semibold)
         return label
     }()
 
     private let stateNameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .mainTextColor
+        label.textColor = .white
         label.font = .systemFont(ofSize: 13)
         return label
     }()
 
     private let countryNameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .mainTextColor
+        label.textColor = .white
         label.font = .systemFont(ofSize: 14, weight: .semibold)
         return label
     }()

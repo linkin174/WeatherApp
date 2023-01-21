@@ -22,7 +22,7 @@ struct MainScene {
 
         struct Response {
             let weather: [CurrentWeather]
-            let places: [PlaceElement]
+            let places: [Place]
         }
 
         struct ViewModel {
@@ -41,7 +41,7 @@ struct MainScene {
 
         struct Response {
             let filteredForecast: [CurrentWeather]
-            let places: [PlaceElement]
+            let places: [Place]
         }
     }
 

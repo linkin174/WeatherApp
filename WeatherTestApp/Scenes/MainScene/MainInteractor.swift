@@ -32,7 +32,7 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     var presenter: MainPresentationLogic?
     var currentWeather: [CurrentWeather] = []
     var filteredWeather: [CurrentWeather] = []
-    private var places: [PlaceElement] = []
+    private var places: [Place] = []
 
     // MARK: - Private properties
 

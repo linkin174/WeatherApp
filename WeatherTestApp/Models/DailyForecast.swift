@@ -17,7 +17,6 @@ struct DailyForecast: Codable {
 // MARK: - List
 
 struct Hourly: Codable {
-
     let dt: Int
     let main: Main
     let weather: [Weather]
@@ -28,19 +27,6 @@ struct Hourly: Codable {
     let rain: Rain?
     let snow: Snow?
     let dtTxt: String
-
-    enum CodingKeys: String, CodingKey {
-        case dt
-        case main
-        case weather
-        case clouds
-        case wind
-        case visibility
-        case pop
-        case rain
-        case snow
-        case dtTxt = "dt_txt"
-    }
 }
 
 // MARK: - Main
@@ -54,19 +40,6 @@ struct Main: Codable {
     let seaLevel: Int?
     let grndLevel: Int?
     let humidity: Int?
-    let tempKf: Double?
-
-    enum CodingKeys: String, CodingKey {
-        case temp
-        case feelsLike = "feels_like"
-        case tempMin = "temp_min"
-        case tempMax = "temp_max"
-        case pressure
-        case humidity
-        case seaLevel = "sea_level"
-        case grndLevel = "grnd_level"
-        case tempKf = "temp_kf"
-    }
 }
 
 // MARK: - Rain
@@ -76,15 +49,17 @@ struct Rain: Codable {
     let oneHour: Double?
 
     enum CodingKeys: String, CodingKey {
-        case threeHours = "3h"
         case oneHour = "1h"
+        case threeHours = "3h"
     }
 }
 
 struct Snow: Codable {
-    let threeHours: Double
+    let threeHours: Double?
+    let oneHour: Double?
 
     enum CodingKeys: String, CodingKey {
+        case oneHour = "1h"
         case threeHours = "3h"
     }
 }

@@ -53,7 +53,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     private let tableInfoLabel: UILabel = {
         let label = UILabel()
         label.text = "Nothing Found"
-        label.textColor = .mainTextColor
+        label.textColor = .white
         label.font = .systemFont(ofSize: 16, weight: .semibold)
         label.isHidden = true
         return label
@@ -62,9 +62,9 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(loadData), for: .valueChanged)
-        refreshControl.tintColor = .mainTextColor
+        refreshControl.tintColor = .white
         let attributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: UIColor.mainTextColor,
+            .foregroundColor: UIColor.white,
             .font: UIFont.systemFont(ofSize: 16)
         ]
         refreshControl.attributedTitle = NSAttributedString(string: "Reloading forecast...",
@@ -174,8 +174,8 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     private func setupNavigationBar() {
         let appearence = UINavigationBarAppearance()
-        appearence.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.mainTextColor]
-        appearence.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.mainTextColor]
+        appearence.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        appearence.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
         appearence.backgroundColor = .mainBackground
         appearence.shadowColor = nil
         navigationController?.navigationBar.prefersLargeTitles = true
@@ -186,7 +186,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         navigationController?.navigationBar.backIndicatorImage = backButtonImage
         navigationController?.navigationBar.backIndicatorTransitionMaskImage = backButtonImage
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
-        navigationItem.backBarButtonItem?.tintColor = .mainTextColor
+        navigationItem.backBarButtonItem?.tintColor = .white
     }
 
     private func showHideTableInfoLabel() {
@@ -315,10 +315,8 @@ extension MainViewController: UITableViewDelegate {
         if section == 2 {
             let view = UIView(frame: CGRect(x: 0, y: 0, width: tableView.frame.width, height: 32))
             view.backgroundColor = .secondaryBackground
-            let titleLabel = UILabel()
-            titleLabel.font = .systemFont(ofSize: 13, weight: .bold)
-            titleLabel.textColor = .mainTextColor
-            titleLabel.text = "Maybe you looking for:"
+            let titleLabel = UILabel.makeLabel(title: "Maybe you looking for:",
+                                               type: .custom(info: (font: .systemFont(ofSize: 13, weight: .semibold), color: .white)))
             view.addSubview(titleLabel)
             titleLabel.snp.makeConstraints { make in
                 make.leading.equalToSuperview().offset(16)
