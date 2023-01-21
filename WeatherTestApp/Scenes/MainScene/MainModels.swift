@@ -55,10 +55,6 @@ struct MainScene {
         struct Request {
             let indexPath: IndexPath
         }
-
-        struct Response {
-            let cityForecast: [CurrentWeather]
-        }
     }
 
     // MARK: - HandleError UseCase
