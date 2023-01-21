@@ -70,8 +70,8 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
                     let coord = Coord(lon: element.lon, lat: element.lat)
                     return !currentWeather.contains(where: { roundCoordinates($0.coord) == roundCoordinates(coord) })
                 }
-                let response = MainScene.SearchCities.Response(filteredForecast: filteredWeather, places: places)
-                presenter?.presentSearchResults(response: response)
+                let response = MainScene.LoadWeather.Response(weather: filteredWeather, places: places)
+                presenter?.presentWeather(response: response)
             }
         } else {
             places.removeAll()

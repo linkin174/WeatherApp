@@ -38,11 +38,6 @@ struct MainScene {
             let searchString: String
             let isSearching: Bool
         }
-
-        struct Response {
-            let filteredForecast: [CurrentWeather]
-            let places: [Place]
-        }
     }
 
     // MARK: - RemoveCityUseCase
