@@ -16,7 +16,7 @@ protocol DayForecastViewModelProtocol {
     var nightTemp: String { get }
 }
 
-final class DayForecastView: UIView {
+final class DayForecastRowView: UIView {
 
     // MARK: - Views
 

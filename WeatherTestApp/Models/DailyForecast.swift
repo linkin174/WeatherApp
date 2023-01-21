@@ -67,9 +67,20 @@ struct Snow: Codable {
 // MARK: - Wind
 
 struct Wind: Codable {
+    enum Direction: String, CaseIterable {
+        case n, nne, ne, ene, e, ese, se, sse, s, ssw, sw, wsw, w, wnw, nw, nnw
+    }
+
     let speed: Double?
     let deg: Int?
     let gust: Double?
+
+    var description: String {
+        guard let deg, let speed else { return "--" }
+        let speedDesription = String(format: "%.f", speed) + " m/s"
+        let direction = Direction.allCases[Int((Double(deg) + 11.25).truncatingRemainder(dividingBy: 360) / 22.5)]
+        return "\(direction.rawValue.uppercased()) \(speedDesription)"
+    }
 }
 
 struct Weather: Codable {

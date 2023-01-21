@@ -24,7 +24,9 @@ protocol MiscInfoViewModelProtocol {
 }
 
 final class MiscInfoView: UIView {
-    
+
+    // MARK: - IB Outlets
+
     @IBOutlet private weak var weatherDescriptionTitle: UILabel!
     @IBOutlet private weak var sunriseTitle: UILabel!
     @IBOutlet private weak var sunsetLabel: UILabel!
@@ -39,6 +41,8 @@ final class MiscInfoView: UIView {
     @IBOutlet private weak var uvIndexLabel: UILabel!
     @IBOutlet private weak var contentView: MiscInfoView!
 
+    // MARK: - Initializers
+
     init() {
         super.init(frame: .zero)
         commonInit()
@@ -47,6 +51,8 @@ final class MiscInfoView: UIView {
     required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
+
+    // MARK: - Public Methods
 
     func setup(viewModel: MiscInfoViewModelProtocol) {
         if !viewModel.isRain {
@@ -64,6 +70,8 @@ final class MiscInfoView: UIView {
         visabilityLabel.text = viewModel.visibility
         uvIndexLabel.text = viewModel.uvIndex
     }
+
+    // MARK: - Private Methods
     
     private func commonInit() {
         Bundle.main.loadNibNamed("MiscInfoView", owner: self)

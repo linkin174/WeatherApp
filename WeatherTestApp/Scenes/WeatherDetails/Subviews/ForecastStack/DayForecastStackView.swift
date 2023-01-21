@@ -31,7 +31,7 @@ final class DayForecastStackView: UIStackView {
 
     func setup(viewModels: [DayForecastViewModelProtocol]) {
         for viewModel in viewModels {
-            let dayRow = DayForecastView()
+            let dayRow = DayForecastRowView()
             dayRow.setup(viewModel: viewModel)
             addArrangedSubview(dayRow)
         }

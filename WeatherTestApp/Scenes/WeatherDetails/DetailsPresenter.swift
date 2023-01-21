@@ -111,8 +111,6 @@ class DetailsPresenter: DetailsPresentationLogic {
 
         let humidity = String(currentWeather.main.humidity ?? 0) + "%"
 
-        let wind = getWindDescription(from: currentWeather.wind)
-
         let feelsLike = getFormattedTemp(currentWeather.main.feelsLike ?? 0)
 
         var isRain: Bool {
@@ -144,42 +142,13 @@ class DetailsPresenter: DetailsPresentationLogic {
                                  sunsetTime: sunsetTime,
                                  chanceOfPop: chanceOfPop,
                                  humidity: humidity,
-                                 wind: wind,
+                                 wind: currentWeather.wind.description,
                                  feelsLike: feelsLike,
                                  precipitation: popVolume,
                                  pressure: pressure,
                                  visibility: visability,
                                  uvIndex: "0",
                                  isRain: isRain)
-    }
-
-
-    private func getWindDescription(from wind: Wind?) -> String {
-        guard let wind else { return "--" }
-        guard let speed = wind.speed else { return "--" }
-        let speedDesription = String(format: "%.f", speed) + " m/s"
-
-        guard let deg = wind.deg else { return speedDesription }
-        var direction = ""
-        switch deg {
-        case 20...30: direction = "N/NE"
-        case 40...50: direction = "NE"
-        case 60...70: direction = "E/NE"
-        case 80...100: direction = "E"
-        case 110...120: direction = "E/SE"
-        case 130...140: direction = "SE"
-        case 150...160: direction = "S/SE"
-        case 170...190: direction = "S"
-        case 200...210: direction = "S/SW"
-        case 220...230: direction = "SW"
-        case 240...250: direction = "W/SW"
-        case 260...280: direction = "W"
-        case 290...300: direction = "W/NW"
-        case 310...320: direction = "NW"
-        case 330...340: direction = "N/NW"
-        default: direction = "N"
-        }
-        return "\(direction) \(speedDesription)"
     }
 
     private func getPrecicipationAvarage(from dailyForecast: [Hourly]) -> String? {
@@ -219,10 +188,9 @@ class DetailsPresenter: DetailsPresentationLogic {
 
     private func getFormattedTemp(_ temp: Double, isDeegreeSign: Bool = true) -> String {
         let formatter = MeasurementFormatter()
-        formatter.numberFormatter.minimumFractionDigits = 0
-        formatter.numberFormatter.maximumFractionDigits = 0
-        let temp = Measurement(value: temp, unit: UnitTemperature.celsius)
-        let string = formatter.string(from: temp)
+        let rounded = Double(Int(temp.rounded()))
+        let measurement = Measurement(value: rounded, unit: UnitTemperature.celsius)
+        let string = formatter.string(from: measurement)
         if isDeegreeSign {
             return String(string.dropLast(1))
         } else {
