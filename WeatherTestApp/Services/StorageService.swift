@@ -21,7 +21,7 @@ final class StorageService: StorageServiceProtocol {
 
     // MARK: - Private properties
 
-    private let defaults = UserDefaults(suiteName: "group.WeatherTestApp")
+    private let defaults = UserDefaults(suiteName: "group.xxxZZZCCC")
 
     // MARK: - Public methods
 

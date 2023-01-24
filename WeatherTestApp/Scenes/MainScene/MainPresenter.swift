@@ -52,7 +52,7 @@ final class MainPresenter: MainPresentationLogic {
                                         weatherIcon: icon,
                                         temp: getFormattedTemp(element.main.temp),
                                         currentTime: Date().shortTimeStyle(adding: Double(element.timezone)),
-                                        cityId: element.internalId ?? 0)
+                                        cityId: element.id ?? 0)
         }
     }
 

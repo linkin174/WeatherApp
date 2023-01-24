@@ -103,7 +103,7 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 
     func removeCity(request: MainScene.RemoveCity.Request) {
         guard let city = cities.first(where: { $0.id == request.cityID }) else { return }
-        currentWeather.removeAll(where: { $0.internalId == city.id })
+        currentWeather.removeAll(where: { $0.id == city.id })
         storageService.remove(city)
     }
 
@@ -115,7 +115,7 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
             switch result {
             case .success(let weather):
                 self.currentWeather = weather
-                    .sorted { $0.internalId ?? 0 < $1.internalId ?? 0}
+                    .sorted { $0.id ?? 0 < $1.id ?? 0}
                 let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
                 presenter?.presentWeather(response: response)
             case .failure(let error):

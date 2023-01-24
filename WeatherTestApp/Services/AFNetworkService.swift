@@ -21,7 +21,7 @@ private enum API {
 final class AFNetworkService: NetworkServiceProtocol {
     // MARK: - Private Properties
 
-    let decoder = JSONDecoder()
+    private let decoder = JSONDecoder()
 
     // MARK: - Initializers
 
@@ -44,7 +44,7 @@ final class AFNetworkService: NetworkServiceProtocol {
                 .responseDecodable(of: CurrentWeather.self, decoder: decoder) { response in
                     switch response.result {
                     case .success(var weather):
-                        weather.internalId = city.id
+                        weather.id = city.id
                         output.append(weather)
                         dispatchGroup.leave()
                     case .failure(let error):
