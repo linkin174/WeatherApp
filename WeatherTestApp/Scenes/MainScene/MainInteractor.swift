@@ -51,10 +51,10 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     // MARK: - Interaction Logic
 
     func loadData() {
+        cities = storageService.loadCities()
         locationManager = CLLocationManager()
         locationManager?.delegate = self
         locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        cities = storageService.loadCities()
     }
 
     func searchCity(request: MainScene.SearchCities.Request) {
@@ -85,7 +85,7 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         let city = City(name: placeToAdd.name,
                         coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat), id: currentWeather.count + 1)
         storageService.add(city)
-        cities.append(city)
+        cities = storageService.loadCities()
         networkService.fetchCurrentWeather(for: [city]) { [unowned self] result in
             switch result {
             case .success(let weather):
@@ -130,11 +130,13 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
             let currentCity = City(coord: Coord(lon: location.coordinate.longitude,
                                                 lat: location.coordinate.latitude),
                                    id: 0)
-            if let index = cities.firstIndex(where: { $0.id == currentCity.id }) {
-                cities[index] = currentCity
-            } else {
-                cities.insert(currentCity, at: 0)
-            }
+//            if let index = cities.firstIndex(where: { $0.id == currentCity.id }) {
+//                cities[index] = currentCity
+//            } else {
+//                cities.insert(currentCity, at: 0)
+//            }
+            storageService.add(currentCity)
+            cities = storageService.loadCities()
         }
     }
 

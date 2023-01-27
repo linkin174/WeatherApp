@@ -9,15 +9,19 @@ import Alamofire
 import Foundation
 
 enum FetcherError: Error {
+    case badURL
     case noConnection
     case badResponse
     case noData
     case badDecoding
+    case noCities
 }
 
 extension FetcherError: LocalizedError {
     var errorDescription: String? {
         switch self {
+        case .badURL:
+            return NSLocalizedString("Bad url for request", comment: "")
         case .noConnection:
             return NSLocalizedString("No connection to the internet", comment: "")
         case .badResponse:
@@ -26,50 +30,45 @@ extension FetcherError: LocalizedError {
             return NSLocalizedString("No data was retrived from server", comment: "")
         case .badDecoding:
             return NSLocalizedString("Data can't be decoded", comment: "")
+        case .noCities:
+            return NSLocalizedString("No cities stored in list", comment: "")
         }
     }
 }
 
 protocol WeatherFetchingProtocol {
-    func fetchCurrentWeather() async -> [CurrentWeather]
+    func fetchCurrentWeather() async throws -> CurrentWeather
 }
 
 final class FetcherService: WeatherFetchingProtocol {
     // MARK: - Private Properties
 
     private let userDefaults = UserDefaults(suiteName: "group.xxxZZZCCC")
-    private var cities: [City] = []
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }()
 
-    init() {
-        cities = loadCities()
+    func fetchCurrentWeather() async throws -> CurrentWeather {
+        guard let city = loadCity() else { throw FetcherError.noCities }
+        let parameters = makeParameters(for: city)
+        guard let url = createURL(method: WeatherAPI.getWeather, parameters: parameters) else { throw FetcherError.badURL }
+        let request = URLRequest(url: url)
+        guard let data = try? await URLSession.shared.data(for: request) else { throw FetcherError.noData }
+        guard var decoded = try? decoder.decode(CurrentWeather.self, from: data.0) else { throw FetcherError.badDecoding }
+        decoded.id = city.id
+        return decoded
     }
 
-    func fetchCurrentWeather() async -> [CurrentWeather] {
-        var out = [CurrentWeather]()
-            for city in cities {
-                let parameters = makeParameters(for: city)
-                guard let url = createURL(method: WeatherAPI.getWeather, parameters: parameters) else { return [] }
-                let request = URLRequest(url: url)
-                guard let data = try? await URLSession.shared.data(for: request) else { return [] }
-                guard var decoded = try? decoder.decode(CurrentWeather.self, from: data.0) else { return [] }
-                decoded.id = city.id
-                out.append(decoded)
-            }
-        return out
-    }
-
-    private func loadCities() -> [City] {
+    private func loadCity() -> City? {
         guard
             let data = userDefaults?.data(forKey: "cities"),
-            let cities = try? JSONDecoder().decode([City].self, from: data)
-        else { return [] }
-        print("\(cities)")
-        return cities
+            let cities = try? JSONDecoder().decode([City].self, from: data),
+            let first = cities.first
+        else { return nil }
+        print("First city \(first)")
+        return first
     }
 
     private func createURL(method: String, parameters: [String: String]? = nil) -> URL? {
