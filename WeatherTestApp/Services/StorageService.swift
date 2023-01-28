@@ -27,9 +27,10 @@ final class StorageService: StorageServiceProtocol {
 
     func add(_ city: City) {
         var cities = loadCities()
+
         if city.id == 0, cities.isEmpty {
             cities.append(city)
-        } else if city.id == 0, !cities.isEmpty{
+        } else if city.id == 0, !cities.isEmpty {
             cities[0] = city
         } else {
             cities.append(city)
@@ -51,8 +52,7 @@ final class StorageService: StorageServiceProtocol {
         else {
             return []
         }
-        print("LOAded cities \(cities.sorted(by: { $0.id ?? 0 < $1.id ?? 0 }).map { $0.name})")
-        return cities.sorted(by: { $0.id ?? 0 < $1.id ?? 0 })
+        return cities
     }
 
     // MARK: - Private methods

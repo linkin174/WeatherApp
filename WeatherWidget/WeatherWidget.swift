@@ -124,18 +124,18 @@ struct ErrorView: View {
     var body: some View {
         ZStack {
             Image(systemName: "exclamationmark.triangle")
-                .resizable(resizingMode: .stretch)
+                .resizable()
                 .frame(width: 100, height: 100)
                 .foregroundColor(.white)
                 .opacity(0.1)
             VStack(spacing: 16) {
                 Text("Error loading widget:")
                     .foregroundColor(.white)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .multilineTextAlignment(.center)
                 Text(errorMessage)
                     .foregroundColor(.white)
-                    .font(.system(size: 13).bold())
+                    .font(.system(size: 13, design: .rounded).bold())
                     .multilineTextAlignment(.center)
             }
         }
@@ -144,7 +144,7 @@ struct ErrorView: View {
 
 struct WeatherWidget: Widget {
     let kind: String = "WeatherWidget"
-    let fetcher: WeatherFetchingProtocol = FetcherService()
+    let fetcher: WeatherFetchingProtocol = WidgetFetcherService()
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider(fetcher: fetcher)) { entry in

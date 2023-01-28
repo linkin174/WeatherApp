@@ -127,6 +127,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         indicator.stopAnimating()
         refreshControl.endRefreshing()
         tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .fade)
+        tableView.layoutIfNeeded()
     }
 
     func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel) {

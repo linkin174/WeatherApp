@@ -13,6 +13,8 @@
 import UIKit
 
 protocol DetailsBusinessLogic {
+    func onLoad()
+    func reloadForecastOnEnterForeground()
     func loadForecast()
 }
 
@@ -39,12 +41,35 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
 
     // MARK: Interaction Logic
 
-    func loadForecast() {
+    func onLoad() {
         guard let weather else { return }
         // For displaying header
         let response = Details.ShowCurrentWeather.Response(weather: weather)
         presenter?.presentCurrentWeather(response: response)
         // Loading daily information
+        loadForecast()
+    }
+
+    func reloadForecastOnEnterForeground() {
+        guard
+            let currentDate = Calendar
+                .current
+                .dateComponents([.hour], from: Date())
+                .hour,
+            let forecastDate = Calendar
+                .current
+                .dateComponents([.hour], from: Date().dateFrom(secondsUTC: (weather?.dt ?? 0)))
+                .hour
+        else { return }
+        if currentDate - forecastDate > 1 {
+            loadForecast()
+        } else {
+            presenter?.presentIndicatorState(state: false)
+        }
+    }
+
+    func loadForecast() {
+        guard let weather else { return }
         let city = City(coord: weather.coord, id: weather.id ?? 0)
         networkService.fetchDailyForecast(for: city) { [unowned self] result in
             switch result {

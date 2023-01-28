@@ -16,6 +16,7 @@ protocol DetailsPresentationLogic {
     func presentCurrentWeather(response: Details.ShowCurrentWeather.Response)
     func presentForecast(response: Details.ShowForecast.Response)
     func presentError(response: Details.HandleError.Response)
+    func presentIndicatorState(state: Bool)
 }
 
 class DetailsPresenter: DetailsPresentationLogic {
@@ -56,6 +57,10 @@ class DetailsPresenter: DetailsPresentationLogic {
         viewController?.displayError(viewModel: viewModel)
     }
 
+    func presentIndicatorState(state: Bool) {
+        viewController?.displayIndicatorState(state: state)
+    }
+
 
     // MARK: - Private Methods
 
@@ -69,7 +74,7 @@ class DetailsPresenter: DetailsPresentationLogic {
     }
 
     private func makeDailyViewModels(from forecast: DailyForecast) -> [DayForecastViewModel] {
-        Dictionary(grouping: forecast.list) { $0.dtTxt.dayNameFormat(timezoneShift: forecast.city.timezone) }
+        return Dictionary(grouping: forecast.list) { $0.dtTxt.dayNameFormat(timezoneShift: forecast.city.timezone) }
             .sorted { $0.value.first?.dt ?? 0 < $1.value.first?.dt ?? 0 }
             .reduce(into: [DayForecastViewModel]()) { partialResult, element in
                 let temps = getMinMax(from: element.value)

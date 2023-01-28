@@ -39,7 +39,11 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     private let storageService: StorageServiceProtocol
     private let networkService: NetworkServiceProtocol
     private var locationManager: CLLocationManager?
-    private var cities: [City] = []
+    private var cities: [City] = [] {
+        didSet {
+            cities = cities.sorted(by: { $0.id ?? 0 < $1.id ?? 0 })
+        }
+    }
 
     // MARK: - Initializers
 
@@ -51,6 +55,7 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     // MARK: - Interaction Logic
 
     func loadData() {
+        print(#function)
         cities = storageService.loadCities()
         locationManager = CLLocationManager()
         locationManager?.delegate = self
@@ -110,7 +115,6 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     // MARK: - Private Methods
 
     private func loadForecast() {
-        updateCitiesWithLocaitonInfo()
         networkService.fetchCurrentWeather(for: cities) { [unowned self] result in
             switch result {
             case .success(let weather):
@@ -125,19 +129,13 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         }
     }
 
-    private func updateCitiesWithLocaitonInfo() {
-        if let location = locationManager?.location {
+    private func addCityFrom(location: CLLocation, completion: @escaping () -> Void) {
             let currentCity = City(coord: Coord(lon: location.coordinate.longitude,
                                                 lat: location.coordinate.latitude),
                                    id: 0)
-//            if let index = cities.firstIndex(where: { $0.id == currentCity.id }) {
-//                cities[index] = currentCity
-//            } else {
-//                cities.insert(currentCity, at: 0)
-//            }
             storageService.add(currentCity)
             cities = storageService.loadCities()
-        }
+        completion()
     }
 
     private func roundCoordinates(_ coord: Coord?) -> Coord? {
@@ -153,7 +151,21 @@ extension MainInteractor: CLLocationManagerDelegate {
         switch manager.authorizationStatus {
         case .notDetermined:
             locationManager?.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationManager?.requestLocation()
         default: loadForecast()
         }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            addCityFrom(location: location) { [unowned self] in
+                loadForecast()
+            }
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        loadForecast()
     }
 }

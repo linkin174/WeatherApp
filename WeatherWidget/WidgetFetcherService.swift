@@ -1,5 +1,5 @@
 //
-//  Fetcher.swift
+//  WidgetFetcherService.swift
 //  WeatherWidgetExtension
 //
 //  Created by Aleksandr Kretov on 24.01.2023.
@@ -40,7 +40,7 @@ protocol WeatherFetchingProtocol {
     func fetchCurrentWeather() async throws -> CurrentWeather
 }
 
-final class FetcherService: WeatherFetchingProtocol {
+final class WidgetFetcherService: WeatherFetchingProtocol {
     // MARK: - Private Properties
 
     private let userDefaults = UserDefaults(suiteName: "group.xxxZZZCCC")
@@ -67,7 +67,6 @@ final class FetcherService: WeatherFetchingProtocol {
             let cities = try? JSONDecoder().decode([City].self, from: data),
             let first = cities.first
         else { return nil }
-        print("First city \(first)")
         return first
     }
 
@@ -84,9 +83,13 @@ final class FetcherService: WeatherFetchingProtocol {
 
     private func makeParameters(for city: City) -> [String: String] {
         var parameters = [String: String]()
-        #warning("remove hardcoded key")
-//        guard let key = Bundle.main.infoDictionary?["API_KEY"] as? String else { return parameters }
-        parameters["appid"] = "05dfd9d22876bb2df80d839573cf47e2"
+        guard
+            let mainBundle = Bundle(url: Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent()),
+            let key = mainBundle.infoDictionary?["API_KEY"] as? String
+        else {
+            return parameters
+        }
+        parameters["appid"] = key
         parameters["units"] = "metric"
         if let longitude = city.coord?.lon, let latitude = city.coord?.lat {
             parameters["lon"] = String(longitude)
