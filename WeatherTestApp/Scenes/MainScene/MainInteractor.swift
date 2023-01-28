@@ -13,11 +13,14 @@
 import CoreLocation
 import UIKit
 
+// MARK: - Interactor Interface
+
 protocol MainBusinessLogic: AnyObject {
     func loadData()
     func searchCity(request: MainScene.SearchCities.Request)
     func removeCity(request: MainScene.RemoveCity.Request)
     func addCity(request: MainScene.AddCity.Request)
+    func reloadForecastOnEnterForeground()
 }
 
 protocol MainDataStore {
@@ -39,11 +42,6 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     private let storageService: StorageServiceProtocol
     private let networkService: NetworkServiceProtocol
     private var locationManager: CLLocationManager?
-    private var cities: [City] = [] {
-        didSet {
-            cities = cities.sorted(by: { $0.id ?? 0 < $1.id ?? 0 })
-        }
-    }
 
     // MARK: - Initializers
 
@@ -55,8 +53,6 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     // MARK: - Interaction Logic
 
     func loadData() {
-        print(#function)
-        cities = storageService.loadCities()
         locationManager = CLLocationManager()
         locationManager?.delegate = self
         locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
@@ -87,10 +83,12 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 
     func addCity(request: MainScene.AddCity.Request) {
         let placeToAdd = places[request.indexPath.row]
+        let currentCities = storageService.getCities()
+        let maxID = currentCities.max(by: { $1.id ?? 0 > $0.id ?? 0 })?.id ?? 0
         let city = City(name: placeToAdd.name,
-                        coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat), id: currentWeather.count + 1)
-        storageService.add(city)
-        cities = storageService.loadCities()
+                        coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat),
+                        id: maxID + 1)
+        storageService.save(city)
         networkService.fetchCurrentWeather(for: [city]) { [unowned self] result in
             switch result {
             case .success(let weather):
@@ -107,14 +105,34 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     }
 
     func removeCity(request: MainScene.RemoveCity.Request) {
+        let cities = storageService.getCities()
         guard let city = cities.first(where: { $0.id == request.cityID }) else { return }
         currentWeather.removeAll(where: { $0.id == city.id })
         storageService.remove(city)
     }
 
+    func reloadForecastOnEnterForeground() {
+        guard
+            let currentDate = Calendar
+                .current
+                .dateComponents([.hour], from: Date())
+                .hour,
+            let forecastDate = Calendar
+                .current
+                .dateComponents([.hour], from: Date().dateFrom(secondsUTC: (currentWeather.first?.dt ?? 0)))
+                .hour
+        else { return }
+        if currentDate - forecastDate > 1 {
+            loadData()
+        } else {
+            presenter?.endLoading()
+        }
+    }
+
     // MARK: - Private Methods
 
     private func loadForecast() {
+        let cities = storageService.getCities()
         networkService.fetchCurrentWeather(for: cities) { [unowned self] result in
             switch result {
             case .success(let weather):
@@ -129,13 +147,18 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         }
     }
 
-    private func addCityFrom(location: CLLocation, completion: @escaping () -> Void) {
+    private func processCurrent(location: CLLocation?) {
+        if let location {
             let currentCity = City(coord: Coord(lon: location.coordinate.longitude,
                                                 lat: location.coordinate.latitude),
                                    id: 0)
-            storageService.add(currentCity)
-            cities = storageService.loadCities()
-        completion()
+            storageService.save(currentCity)
+            loadForecast()
+        } else {
+            let cityToRemove = City(id: 0)
+            storageService.remove(cityToRemove)
+            loadForecast()
+        }
     }
 
     private func roundCoordinates(_ coord: Coord?) -> Coord? {
@@ -147,21 +170,23 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 }
 // MARK: - Extensions
 extension MainInteractor: CLLocationManagerDelegate {
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .notDetermined:
             locationManager?.requestWhenInUseAuthorization()
         case .authorizedAlways, .authorizedWhenInUse:
             locationManager?.requestLocation()
-        default: loadForecast()
+        case .restricted, .denied:
+            processCurrent(location: nil)
+        @unknown default:
+            fatalError()
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.last {
-            addCityFrom(location: location) { [unowned self] in
-                loadForecast()
-            }
+            processCurrent(location: location)
         }
     }
 

@@ -15,6 +15,7 @@ import UIKit
 protocol MainPresentationLogic {
     func presentWeather(response: MainScene.LoadWeather.Response)
     func presentError(response: MainScene.HandleError.Response)
+    func endLoading()
 }
 
 final class MainPresenter: MainPresentationLogic {
@@ -41,6 +42,10 @@ final class MainPresenter: MainPresentationLogic {
         let messege = response.error.asAFError?.localizedDescription
         let viewModel = MainScene.HandleError.ViewModel(errorMessage: messege ?? "")
         viewController?.displayError(viewModel: viewModel)
+    }
+
+    func endLoading() {
+        viewController?.endLoading()
     }
 
     // MARK: - Private methods

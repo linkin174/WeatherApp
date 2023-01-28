@@ -72,6 +72,7 @@ struct WeatherWidgetEntryView: View {
             }
         }
         .shadow(radius: 5)
+        .widgetURL(URL(string: "\(entry.currentWeather?.id ?? 0)"))
     }
 }
 

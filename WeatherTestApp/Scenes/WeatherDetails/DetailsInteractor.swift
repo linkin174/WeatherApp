@@ -51,6 +51,7 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
     }
 
     func reloadForecastOnEnterForeground() {
+        print(#function)
         guard
             let currentDate = Calendar
                 .current
@@ -62,6 +63,9 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
                 .hour
         else { return }
         if currentDate - forecastDate > 1 {
+            // Load current weather for header after time is expired
+            loadCurrentWeather()
+            // Load new detailed forecast after time is expired
             loadForecast()
         } else {
             presenter?.presentIndicatorState(state: false)
@@ -76,6 +80,23 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
             case .success(let forecast):
                 let response = Details.ShowForecast.Response(forecast: forecast, currentweather: weather)
                 presenter?.presentForecast(response: response)
+            case .failure(let error):
+                let response = Details.HandleError.Response(error: error)
+                presenter?.presentError(response: response)
+            }
+        }
+    }
+
+    private func loadCurrentWeather() {
+        guard let weather else { return }
+        let city = City(coord: weather.coord, id: weather.id ?? 0)
+        networkService.fetchCurrentWeather(for: [city]) { [unowned self] result in
+            switch result {
+            case .success(let currentWeather):
+                if let first = currentWeather.first {
+                    let response = Details.ShowCurrentWeather.Response(weather: first)
+                    presenter?.presentCurrentWeather(response: response)
+                }
             case .failure(let error):
                 let response = Details.HandleError.Response(error: error)
                 presenter?.presentError(response: response)

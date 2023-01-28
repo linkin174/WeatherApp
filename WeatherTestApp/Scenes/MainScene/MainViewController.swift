@@ -16,6 +16,7 @@ protocol MainDisplayLogic: AnyObject {
     func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel)
     func displayError(viewModel: MainScene.HandleError.ViewModel)
     func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel)
+    func endLoading()
 }
 
 final class MainViewController: UIViewController, MainDisplayLogic {
@@ -116,7 +117,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
                                                                       object: nil,
                                                                       queue: .main,
-                                                                      using: { [unowned self] _ in loadData() })
+                                                                      using: { [unowned self] _ in reloadOnEnterForeground() })
     }
 
     // MARK: - Display Logic
@@ -142,6 +143,10 @@ final class MainViewController: UIViewController, MainDisplayLogic {
             self?.loadData()
         }
         showAlert(title: "OOPS", message: viewModel.errorMessage, actions: [retryAction])
+    }
+
+    func endLoading() {
+        indicator.stopAnimating()
     }
 
     // MARK: - Private Methods
@@ -274,6 +279,13 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         interactor?.addCity(request: request)
     }
 
+    private func reloadOnEnterForeground() {
+        if !refreshControl.isRefreshing {
+            indicator.startAnimating()
+        }
+        interactor?.reloadForecastOnEnterForeground()
+    }
+
     @objc private func loadData() {
         if !refreshControl.isRefreshing {
             indicator.startAnimating()
@@ -300,7 +312,7 @@ extension MainViewController: UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        if indexPath.section == 1, indexPath.row != 0 {
+        if indexPath.section == 1, mainViewModel?.weatherCellViewModels[indexPath.row].cityId != 0 {
             let deleteAction = UIContextualAction(style: .destructive, title: "Remove") { [weak self] _, _, completion in
                 self?.deleteCity(at: indexPath)
                 completion(true)
