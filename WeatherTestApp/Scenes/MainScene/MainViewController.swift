@@ -62,8 +62,9 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(loadData), for: .valueChanged)
+        refreshControl.addTarget(self, action: #selector(reloadData), for: .valueChanged)
         refreshControl.tintColor = .white
+        refreshControl.tag = 0
         let attributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor.white,
             .font: UIFont.systemFont(ofSize: 16)
@@ -74,14 +75,6 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     }()
 
     private let indicator: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .medium)
-        indicator.color = .white
-        indicator.startAnimating()
-        indicator.hidesWhenStopped = true
-        return indicator
-    }()
-
-    private let sectionIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
         indicator.color = .white
         indicator.startAnimating()
@@ -113,11 +106,10 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         title = "Weather"
         setupNavigationBar()
         setupConstraints()
-        loadData()
         notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
                                                                       object: nil,
                                                                       queue: .main,
-                                                                      using: { [unowned self] _ in reloadOnEnterForeground() })
+                                                                      using: { [unowned self] _ in reloadData() })
     }
 
     // MARK: - Display Logic
@@ -140,7 +132,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     func displayError(viewModel: MainScene.HandleError.ViewModel) {
         let retryAction = UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
-            self?.loadData()
+            self?.reloadData(sender: self?.refreshControl)
         }
         showAlert(title: "OOPS", message: viewModel.errorMessage, actions: [retryAction])
     }
@@ -242,6 +234,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         }
 
         let pathsToReload = (0..<mainViewModel.placeCellViewModels.count).map { IndexPath(row: $0, section: 2) }
+        #warning("think")
         reloadPlaceRows(at: pathsToReload)
     }
 
@@ -279,18 +272,22 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         interactor?.addCity(request: request)
     }
 
-    private func reloadOnEnterForeground() {
-        if !refreshControl.isRefreshing {
-            indicator.startAnimating()
-        }
-        interactor?.reloadForecastOnEnterForeground()
-    }
+//    private func reloadOnEnterForeground() {
+//        if !refreshControl.isRefreshing {
+//            indicator.startAnimating()
+//        }
+//        interactor?.reloadData(force: false)
+//    }
 
-    @objc private func loadData() {
+    @objc private func reloadData(sender: UIView? = nil) {
         if !refreshControl.isRefreshing {
             indicator.startAnimating()
         }
-        interactor?.loadData()
+        if let tag = sender?.tag, tag == 0 {
+            interactor?.reloadData(force: true)
+        } else {
+            interactor?.reloadData(force: false)
+        }
     }
 }
 
