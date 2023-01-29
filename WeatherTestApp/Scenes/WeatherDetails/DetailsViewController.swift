@@ -27,6 +27,7 @@ final class DetailsViewController: UIViewController {
     var router: (NSObjectProtocol & DetailsRoutingLogic & DetailsDataPassing)?
 
     // MARK: - Private properties
+
     private var notificationObserver: NSObjectProtocol?
 
     // MARK: Views

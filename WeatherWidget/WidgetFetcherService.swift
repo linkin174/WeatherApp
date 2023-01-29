@@ -37,21 +37,21 @@ extension FetcherError: LocalizedError {
 }
 
 protocol WeatherFetchingProtocol {
-    func fetchCurrentWeather() async throws -> CurrentWeather
+    func fetchCurrentWeather(for city: City) async throws -> CurrentWeather
 }
 
 final class WidgetFetcherService: WeatherFetchingProtocol {
     // MARK: - Private Properties
 
-    private let userDefaults = UserDefaults(suiteName: "group.xxxZZZCCC")
+//    private let userDefaults = UserDefaults(suiteName: "group.xxxZZZCCC")
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }()
 
-    func fetchCurrentWeather() async throws -> CurrentWeather {
-        guard let city = loadCity() else { throw FetcherError.noCities }
+    func fetchCurrentWeather(for city: City) async throws -> CurrentWeather {
+//        guard let city = loadCity() else { throw FetcherError.noCities }
         let parameters = makeParameters(for: city)
         guard let url = createURL(method: WeatherAPI.getWeather, parameters: parameters) else { throw FetcherError.badURL }
         let request = URLRequest(url: url)
@@ -61,14 +61,14 @@ final class WidgetFetcherService: WeatherFetchingProtocol {
         return decoded
     }
 
-    private func loadCity() -> City? {
-        guard
-            let data = userDefaults?.data(forKey: "cities"),
-            let cities = try? JSONDecoder().decode([City].self, from: data),
-            let first = cities.first
-        else { return nil }
-        return first
-    }
+//    private func loadCity() -> City? {
+//        guard
+//            let data = userDefaults?.data(forKey: "cities"),
+//            let cities = try? JSONDecoder().decode([City].self, from: data),
+//            let first = cities.first
+//        else { return nil }
+//        return first
+//    }
 
     private func createURL(method: String, parameters: [String: String]? = nil) -> URL? {
         var components = URLComponents()

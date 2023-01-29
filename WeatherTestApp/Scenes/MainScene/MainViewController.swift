@@ -62,7 +62,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(reloadData), for: .valueChanged)
+        refreshControl.addTarget(self, action: #selector(reloadData(sender:)), for: .valueChanged)
         refreshControl.tintColor = .white
         refreshControl.tag = 0
         let attributes: [NSAttributedString.Key: Any] = [
@@ -146,9 +146,11 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     private func setupModule() {
         let networkService = AFNetworkService()
         let storageService = StorageService()
+        let locationService = LocationService()
         let viewController = self
         let interactor = MainInteractor(storageService: storageService,
-                                        networkService: networkService)
+                                        networkService: networkService,
+                                        locationService: locationService)
         let presenter = MainPresenter()
         let router = MainRouter()
         viewController.interactor = interactor
@@ -271,21 +273,14 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         interactor?.addCity(request: request)
     }
 
-//    private func reloadOnEnterForeground() {
-//        if !refreshControl.isRefreshing {
-//            indicator.startAnimating()
-//        }
-//        interactor?.reloadData(force: false)
-//    }
-
     @objc private func reloadData(sender: UIView? = nil) {
         if !refreshControl.isRefreshing {
             indicator.startAnimating()
         }
         if let tag = sender?.tag, tag == 0 {
-            interactor?.reloadData(force: true)
+            interactor?.loadData(force: true)
         } else {
-            interactor?.reloadData(force: false)
+            interactor?.loadData(force: false)
         }
     }
 }

@@ -16,7 +16,7 @@ import UIKit
 // MARK: - Interactor Interface
 
 protocol MainBusinessLogic: AnyObject {
-    func reloadData(force: Bool)
+    func loadData(force: Bool)
     func searchCity(request: MainScene.SearchCities.Request)
     func removeCity(request: MainScene.RemoveCity.Request)
     func addCity(request: MainScene.AddCity.Request)
@@ -39,36 +39,28 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 
     private let storageService: StorageServiceProtocol
     private let networkService: NetworkServiceProtocol
-    private var locationManager: CLLocationManager?
-    private var currentLocation: CLLocation? {
-        didSet {
-            handleCurrentLocationAndLoad()
-        }
-    }
+    private var locationService: LocationServiceProtocol
 
     // MARK: - Initializers
 
-    init(storageService: StorageServiceProtocol, networkService: NetworkServiceProtocol) {
-        print("UNTERACTOR INIT")
+    init(storageService: StorageServiceProtocol, networkService: NetworkServiceProtocol, locationService: LocationServiceProtocol) {
         self.storageService = storageService
         self.networkService = networkService
-        self.locationManager = CLLocationManager()
+        self.locationService = locationService
         super.init()
-        locationManager?.delegate = self
-        locationManager?.desiredAccuracy = kCLLocationAccuracyKilometer
-        locationManager?.distanceFilter = 10_000
+        loadData(force: true)
     }
 
     // MARK: - Interaction Logic
 
-    func reloadData(force: Bool) {
+    func loadData(force: Bool) {
         if force {
-            locationManager?.startUpdatingLocation()
+            handleCurrentLocationAndLoad()
         } else {
             let currentDate = Date()
             let forecastDate = Date().dateFrom(secondsUTC: currentWeather.first?.dt ?? 0)
             if forecastDate.distance(to: currentDate) > 3600 {
-                locationManager?.startUpdatingLocation()
+                handleCurrentLocationAndLoad()
             } else {
                 presenter?.endLoading()
             }
@@ -131,20 +123,20 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     // MARK: - Private Methods
 
     private func handleCurrentLocationAndLoad() {
-        print(#function)
-        if let currentLocation {
-            let currentCity = City(coord: Coord(lon: currentLocation.coordinate.longitude,
-                                                lat: currentLocation.coordinate.latitude),
-                                   id: 0)
-            storageService.save(currentCity)
-        } else {
-            storageService.remove(cityID: 0)
+        locationService.getLocation { [unowned self] location in
+            if let location {
+                let currentCity = City(coord: Coord(lon: location.coordinate.longitude,
+                                                    lat: location.coordinate.latitude),
+                                       id: 0)
+                storageService.save(currentCity)
+            } else {
+                storageService.remove(cityID: 0)
+            }
+            loadForecast()
         }
-        loadForecast()
     }
 
     private func loadForecast() {
-        print(#function)
         let cities = storageService.getCities()
         networkService.fetchCurrentWeather(for: cities) { [unowned self] result in
             switch result {
@@ -165,33 +157,5 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         let roundedLon = round(lon * 100) / 100
         let roundedLat = round(lat * 100) / 100
         return Coord(lon: roundedLon, lat: roundedLat)
-    }
-}
-
-// MARK: - Extensions
-
-extension MainInteractor: CLLocationManagerDelegate {
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        print(#function)
-        switch manager.authorizationStatus {
-        case .notDetermined:
-            locationManager?.requestWhenInUseAuthorization()
-        case .authorizedAlways, .authorizedWhenInUse:
-            locationManager?.startUpdatingLocation()
-        case .restricted, .denied:
-            currentLocation = nil
-        default: break
-        }
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        print(#function)
-        print(locations)
-        currentLocation = locations.last
-        locationManager?.stopUpdatingLocation()
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print(error.localizedDescription)
     }
 }

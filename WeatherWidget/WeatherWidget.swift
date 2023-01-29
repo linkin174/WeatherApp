@@ -9,19 +9,25 @@ import SwiftUI
 import WidgetKit
 
 struct Provider: TimelineProvider {
-    private let fetcher: WeatherFetchingProtocol
-    private let userDefaults = UserDefaults(suiteName: "group.xxxZZZCCC")
+    // MARK: - Private properties
 
-    init(fetcher: WeatherFetchingProtocol) {
+    private let fetcher: WeatherFetchingProtocol
+    private let locationService: LocationServiceProtocol
+
+    // MARK - Initializers
+
+    init(fetcher: WeatherFetchingProtocol, locationService: LocationServiceProtocol) {
         self.fetcher = fetcher
+        self.locationService = locationService
     }
 
+    // MARK: - Public Methods
+    
     func placeholder(in context: Context) -> WeatherEntry {
         WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (WeatherEntry) -> ()) {
-
         let entry = WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
         completion(entry)
     }
@@ -29,16 +35,26 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let currentDate = Date()
         let nextDate = Calendar.current.date(byAdding: .hour, value: 1, to: currentDate)
-        Task {
-            do {
-                let currentWeather = try await fetcher.fetchCurrentWeather()
-                let entry = WeatherEntry(date: currentDate, currentWeather: currentWeather)
-                let timelline = Timeline(entries: [entry], policy: .after(nextDate!))
-                completion(timelline)
-            } catch {
-                let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: error.localizedDescription)
-                let timeLine = Timeline(entries: [entry], policy: .after(nextDate!))
-                completion(timeLine)
+        locationService.getLocation { location in
+            if let location {
+                let city = City(coord: Coord(lon: location.coordinate.longitude,
+                                             lat: location.coordinate.latitude))
+                Task {
+                    do {
+                        let currentWeather = try await fetcher.fetchCurrentWeather(for: city)
+                        let entry = WeatherEntry(date: currentDate, currentWeather: currentWeather)
+                        let timelline = Timeline(entries: [entry], policy: .after(nextDate!))
+                        completion(timelline)
+                    } catch {
+                        let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: error.localizedDescription)
+                        let timeLine = Timeline(entries: [entry], policy: .after(nextDate!))
+                        completion(timeLine)
+                    }
+                }
+            } else {
+                let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: "Location services disabled")
+                let timeline = Timeline(entries: [entry], policy: .never)
+                completion(timeline)
             }
         }
     }
@@ -87,12 +103,10 @@ struct WeatherView: View {
                     .font(.system(size: 16, design: .rounded))
                     .foregroundColor(.white)
                     .lineLimit(1)
-                if weather.id == 0 {
-                    Image(systemName: "location.fill")
-                        .resizable()
-                        .foregroundColor(.white)
-                        .frame(width: 12, height: 12)
-                }
+                Image(systemName: "location.fill")
+                    .resizable()
+                    .foregroundColor(.white)
+                    .frame(width: 12, height: 12)
             }
             Text(weather.main.temp?.tempFormat() ?? "")
                 .foregroundColor(.white)
@@ -140,30 +154,35 @@ struct ErrorView: View {
                     .font(.system(size: 13, design: .rounded).bold())
                     .multilineTextAlignment(.center)
             }
+            .padding(.horizontal, 8)
         }
     }
 }
 
 struct WeatherWidget: Widget {
+
     let kind: String = "WeatherWidget"
-    let fetcher: WeatherFetchingProtocol = WidgetFetcherService()
+    let fetcher = WidgetFetcherService()
+    let locationService = LocationService()
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider(fetcher: fetcher)) { entry in
+        StaticConfiguration(kind: kind, provider: Provider(fetcher: fetcher, locationService: locationService)) { entry in
             WeatherWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
+        .configurationDisplayName("Weather")
+        .description("Simple widget to show weather in your current location")
         .supportedFamilies([.systemSmall])
     }
 }
 
 struct WeatherWidget_Previews: PreviewProvider {
-    static let errorEntry = WeatherEntry(date: Date(), currentWeather: nil, error: "Bad response")
+    static let errorEntry = WeatherEntry(date: Date(), currentWeather: nil, error: "Location Services Disabled")
     static var previews: some View {
-        WeatherWidgetEntryView(entry: WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder))
-            .previewContext(WidgetPreviewContext(family: .systemSmall))
-        WeatherWidgetEntryView(entry: errorEntry)
-            .previewContext(WidgetPreviewContext(family: .systemSmall))
+        Group {
+            WeatherWidgetEntryView(entry: WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder))
+                .previewContext(WidgetPreviewContext(family: .systemSmall))
+            WeatherWidgetEntryView(entry: errorEntry)
+                .previewContext(WidgetPreviewContext(family: .systemSmall))
+        }
     }
 }
