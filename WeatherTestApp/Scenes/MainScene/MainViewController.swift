@@ -234,7 +234,6 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         }
 
         let pathsToReload = (0..<mainViewModel.placeCellViewModels.count).map { IndexPath(row: $0, section: 2) }
-        #warning("think")
         reloadPlaceRows(at: pathsToReload)
     }
 

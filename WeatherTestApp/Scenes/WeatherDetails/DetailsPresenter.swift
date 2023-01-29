@@ -16,7 +16,7 @@ protocol DetailsPresentationLogic {
     func presentCurrentWeather(response: Details.ShowCurrentWeather.Response)
     func presentForecast(response: Details.ShowForecast.Response)
     func presentError(response: Details.HandleError.Response)
-    func presentIndicatorState(state: Bool)
+    func endLoading()
 }
 
 class DetailsPresenter: DetailsPresentationLogic {
@@ -57,8 +57,8 @@ class DetailsPresenter: DetailsPresentationLogic {
         viewController?.displayError(viewModel: viewModel)
     }
 
-    func presentIndicatorState(state: Bool) {
-        viewController?.displayIndicatorState(state: state)
+    func endLoading() {
+        viewController?.displayEndLoading()
     }
 
 

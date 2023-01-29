@@ -17,7 +17,7 @@ protocol DetailsDisplayLogic: AnyObject {
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel)
     func displayCurrentWeather(viewModel: Details.ShowCurrentWeather.ViewModel)
     func displayError(viewModel: Details.HandleError.ViewModel)
-    func displayIndicatorState(state: Bool)
+    func displayEndLoading()
 }
 
 final class DetailsViewController: UIViewController {
@@ -211,9 +211,7 @@ extension DetailsViewController: DetailsDisplayLogic {
         showAlert(title: "OOPS!", message: viewModel.errorMessage, actions: [retryAction])
     }
 
-    func displayIndicatorState(state: Bool) {
-        if !state {
-            loadingIndicator.stopAnimating()
-        }
+    func displayEndLoading() {
+        loadingIndicator.stopAnimating()
     }
 }

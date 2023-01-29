@@ -23,7 +23,6 @@ protocol DetailsDataStore {
 }
 
 class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
-
     // MARK: - Public Properties
 
     var weather: CurrentWeather?
@@ -51,24 +50,13 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
     }
 
     func reloadForecastOnEnterForeground() {
-        print(#function)
-        guard
-            let currentDate = Calendar
-                .current
-                .dateComponents([.hour], from: Date())
-                .hour,
-            let forecastDate = Calendar
-                .current
-                .dateComponents([.hour], from: Date().dateFrom(secondsUTC: (weather?.dt ?? 0)))
-                .hour
-        else { return }
-        if currentDate - forecastDate > 1 {
-            // Load current weather for header after time is expired
+        let currentDate = Date()
+        let forecastDate = Date().dateFrom(secondsUTC: weather?.dt ?? 0)
+        if forecastDate.distance(to: currentDate) > 3600 {
             loadCurrentWeather()
-            // Load new detailed forecast after time is expired
             loadForecast()
         } else {
-            presenter?.presentIndicatorState(state: false)
+            presenter?.endLoading()
         }
     }
 
