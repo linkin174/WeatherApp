@@ -27,11 +27,17 @@ final class StorageService: StorageServiceProtocol {
 
     // MARK: - Public methods
 
+    func getCities() -> [City] {
+        cities
+    }
+
     func save(_ city: City) {
-        if city.id == 0, cities.isEmpty {
-            cities.append(city)
-        } else if city.id == 0, !cities.isEmpty {
-            cities[0] = city
+        if city.id == 0, !cities.isEmpty {
+            if cities.contains(where: { $0.id == 0 }) {
+                cities[0] = city
+            } else {
+                cities.insert(city, at: 0)
+            }
         } else {
             cities.append(city)
         }
@@ -43,9 +49,6 @@ final class StorageService: StorageServiceProtocol {
         save(cities)
     }
 
-    func getCities() -> [City] {
-        return cities
-    }
 
 
     // MARK: - Private methods
@@ -58,8 +61,6 @@ final class StorageService: StorageServiceProtocol {
         else {
             return []
         }
-
-        print("Cities from storage \(cities.map { $0.id })")
         return cities
     }
     

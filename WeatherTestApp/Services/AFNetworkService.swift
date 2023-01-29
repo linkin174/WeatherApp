@@ -61,21 +61,6 @@ final class AFNetworkService: NetworkServiceProtocol {
                         dispatchGroup.leave()
                     }
                 }
-            /*
-            AF.request(url, parameters: parameters)
-                .validate()
-                .responseDecodable(of: CurrentWeather.self, decoder: decoder) { response in
-                    switch response.result {
-                    case .success(var weather):
-                        weather.id = city.id
-                        output.append(weather)
-                        dispatchGroup.leave()
-                    case .failure(let error):
-                        fetchingError = error
-                        dispatchGroup.leave()
-                    }
-                }
-             */
         }
 
         dispatchGroup.notify(queue: .main) {
@@ -102,11 +87,9 @@ final class AFNetworkService: NetworkServiceProtocol {
     }
 
     func fetchCities(searchString: String, completion: @escaping ([Place]) -> Void) {
-
         let url = createURL(api: .geocoder, GeocoderAPI.searchCity)
         let parameters = makeParameters(for: searchString)
-        #warning("convert co session")
-        AF.request(url, parameters: parameters)
+        sessionManager.request(url, parameters: parameters)
             .validate()
             .responseDecodable(of: [Place].self, decoder: decoder) { response in
                 switch response.result {
@@ -153,7 +136,4 @@ final class AFNetworkService: NetworkServiceProtocol {
         components.path = method
         return components.url?.absoluteString ?? ""
     }
-
-
 }
-

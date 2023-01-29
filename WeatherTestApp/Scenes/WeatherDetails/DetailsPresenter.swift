@@ -74,7 +74,7 @@ class DetailsPresenter: DetailsPresentationLogic {
     }
 
     private func makeDailyViewModels(from forecast: DailyForecast) -> [DayForecastViewModel] {
-        return Dictionary(grouping: forecast.list) { $0.dtTxt.dayNameFormat(timezoneShift: forecast.city.timezone) }
+        Dictionary(grouping: forecast.list) { $0.dtTxt.dayNameFormat(timezoneShift: forecast.city.timezone) }
             .sorted { $0.value.first?.dt ?? 0 < $1.value.first?.dt ?? 0 }
             .reduce(into: [DayForecastViewModel]()) { partialResult, element in
                 let temps = getMinMax(from: element.value)
@@ -84,7 +84,7 @@ class DetailsPresenter: DetailsPresentationLogic {
                                                      iconName: icon,
                                                      precipitationTitle: pop,
                                                      dayTemp: temps.max.tempFormat(withDegreeSign: false),
-                                                     nightTemp: temps.max.tempFormat(withDegreeSign: false))
+                                                     nightTemp: temps.min.tempFormat(withDegreeSign: false))
                 partialResult.append(viewModel)
                 partialResult[0].dayName = "Today"
             }
