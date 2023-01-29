@@ -30,7 +30,8 @@ final class DayForecastRowView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
         view.clipsToBounds = true
-        view.dropShadow()
+        #warning("fix shadow")
+//        view.dropShadow()
         return view
     }()
 
@@ -78,7 +79,7 @@ final class DayForecastRowView: UIView {
 
         iconImageView.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
-            make.width.height.equalTo(30)
+            make.width.height.equalTo(25)
         }
 
         precipitationLabel.snp.makeConstraints { make in

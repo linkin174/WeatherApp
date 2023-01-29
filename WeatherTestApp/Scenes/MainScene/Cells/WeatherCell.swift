@@ -93,8 +93,8 @@ final class WeatherCell: UITableViewCell {
         }
 
         weatherIcon.snp.makeConstraints { make in
-            make.width.height.equalTo(50)
-            make.trailing.equalToSuperview().inset(141)
+            make.width.height.equalTo(35)
+            make.centerX.equalToSuperview().offset(40)
             make.bottom.equalToSuperview().inset(13)
         }
     }

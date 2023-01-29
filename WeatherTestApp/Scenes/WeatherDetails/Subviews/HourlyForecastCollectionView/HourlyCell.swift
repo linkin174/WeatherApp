@@ -32,7 +32,8 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
         let view = UIImageView()
         view.contentMode = .scaleAspectFit
         view.clipsToBounds = true
-        view.dropShadow()
+        #warning("fix shadow")
+//        view.dropShadow()
         return view
     }()
 
@@ -71,11 +72,11 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
 
         mainStack.snp.makeConstraints { make in
             make.center.equalToSuperview()
-            make.width.equalToSuperview()
+            make.width.height.equalToSuperview()
         }
 
         iconImageView.snp.makeConstraints { make in
-            make.width.height.equalTo(30)
+            make.width.height.equalTo(25)
         }
     }
 }

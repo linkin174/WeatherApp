@@ -97,7 +97,7 @@ struct WeatherView: View {
     let weather: CurrentWeather
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 8) {
             HStack {
                 Text(weather.name ?? "")
                     .font(.system(size: 16, design: .rounded))
@@ -108,13 +108,16 @@ struct WeatherView: View {
                     .foregroundColor(.white)
                     .frame(width: 12, height: 12)
             }
-            Text(weather.main.temp?.tempFormat() ?? "")
-                .foregroundColor(.white)
-                .font(.system(size: 48, weight: .thin, design: .rounded))
-            if let icon = String(weather.weather.first!.icon?.dropLast() ?? "") {
-                Image(icon)
-                    .resizable()
-                    .frame(width: 30, height: 30)
+            HStack(spacing: 8) {
+                if let icon = String(weather.weather.first!.icon?.dropLast() ?? "") {
+                    Image(icon)
+                        .resizable()
+                        .frame(width: 30, height: 30)
+                        .opacity(0.8)
+                }
+                Text(weather.main.temp?.tempFormat() ?? "")
+                    .foregroundColor(.white)
+                    .font(.system(size: 48, weight: .thin, design: .rounded))
             }
             Text(weather.weather.first!.description ?? "")
                 .font(.system(size: 14, weight: .bold, design: .rounded))
