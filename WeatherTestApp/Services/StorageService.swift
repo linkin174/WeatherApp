@@ -10,7 +10,7 @@ import Foundation
 protocol StorageServiceProtocol {
     func getCities() -> [City]
     func save(_ city: City)
-    func remove(_ city: City)
+    func remove(cityID: Int)
 }
 
 final class StorageService: StorageServiceProtocol {
@@ -44,8 +44,8 @@ final class StorageService: StorageServiceProtocol {
         save(cities)
     }
 
-    func remove(_ city: City) {
-        cities.removeAll(where: { $0.id == city.id })
+    func remove(cityID: Int) {
+        cities.removeAll(where: { $0.id == cityID })
         save(cities)
     }
 

@@ -21,6 +21,7 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (WeatherEntry) -> ()) {
+
         let entry = WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
         completion(entry)
     }

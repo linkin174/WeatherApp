@@ -41,33 +41,39 @@ final class AFNetworkService: NetworkServiceProtocol {
     // MARK: - Public Methods
 
     func fetchCurrentWeather(for cities: [City], completion: @escaping (Result<[CurrentWeather], AFError>) -> Void) {
-        let url = createURL(api: .weather, WeatherAPI.getWeather)
-        let dispatchGroup = DispatchGroup()
-        var output = [CurrentWeather]()
-        var fetchingError: AFError?
-        for city in cities {
-            dispatchGroup.enter()
-            let parameters = makeParameters(for: city)
-            sessionManager.request(url, method: .get, parameters: parameters)
-                .validate()
-                .responseDecodable(of: CurrentWeather.self, decoder: decoder) { response in
-                    switch response.result {
-                    case .success(var weather):
-                        weather.id = city.id
-                        output.append(weather)
-                        dispatchGroup.leave()
-                    case .failure(let error):
-                        fetchingError = error
-                        dispatchGroup.leave()
+        #warning("check for connection and error")
+        if NetworkReachabilityManager()?.isReachable ?? true {
+            print("reachable")
+            let url = createURL(api: .weather, WeatherAPI.getWeather)
+            let dispatchGroup = DispatchGroup()
+            var output = [CurrentWeather]()
+            var fetchingError: AFError?
+            for city in cities {
+                dispatchGroup.enter()
+                let parameters = makeParameters(for: city)
+                sessionManager.request(url, method: .get, parameters: parameters)
+                    .validate()
+                    .responseDecodable(of: CurrentWeather.self, decoder: decoder) { response in
+                        switch response.result {
+                        case .success(var weather):
+                            weather.id = city.id
+                            output.append(weather)
+                            dispatchGroup.leave()
+                        case .failure(let error):
+                            fetchingError = error
+                            dispatchGroup.leave()
+                        }
                     }
-                }
-        }
-
-        dispatchGroup.notify(queue: .main) {
-            completion(.success(output))
-            if let fetchingError {
-                completion(.failure(fetchingError))
             }
+
+            dispatchGroup.notify(queue: .main) {
+                completion(.success(output))
+                if let fetchingError {
+                    completion(.failure(fetchingError))
+                }
+            }
+        } else {
+            print("not reachable")
         }
     }
 
