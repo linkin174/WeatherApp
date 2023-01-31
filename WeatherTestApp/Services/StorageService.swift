@@ -17,7 +17,7 @@ final class StorageService: StorageServiceProtocol {
 
     // MARK: - Private properties
 
-    private let defaults = UserDefaults(suiteName: "group.xxxZZZCCC")
+    private let defaults = UserDefaults.standard
     private var cities: [City] = []
 
     // MARK: - Initializers
@@ -54,7 +54,6 @@ final class StorageService: StorageServiceProtocol {
     // MARK: - Private methods
 
     private func loadCities() -> [City] {
-        guard let defaults else { return [] }
         guard
             let data = defaults.data(forKey: "cities"),
             let cities = try? JSONDecoder().decode([City].self, from: data)
@@ -66,7 +65,6 @@ final class StorageService: StorageServiceProtocol {
     
     private func save(_ cities: [City]) {
         guard
-            let defaults,
             let data = try? JSONEncoder().encode(cities)
         else { return }
         defaults.set(data, forKey: "cities")

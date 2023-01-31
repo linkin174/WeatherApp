@@ -34,7 +34,7 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let currentDate = Date()
-        let nextDate = Calendar.current.date(byAdding: .hour, value: 1, to: currentDate)
+        let nextDate = Calendar.current.date(byAdding: .minute, value: 15, to: currentDate)
         locationService.getLocation { location in
             if let location {
                 let city = City(coord: Coord(lon: location.coordinate.longitude,

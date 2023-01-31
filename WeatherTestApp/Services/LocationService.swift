@@ -5,8 +5,8 @@
 //  Created by Aleksandr Kretov on 29.01.2023.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 
 protocol LocationServiceProtocol {
     func getLocation(completion: @escaping (CLLocation?) -> Void)
@@ -23,9 +23,11 @@ final class LocationService: NSObject, LocationServiceProtocol {
     override init() {
         super.init()
         locationManager = CLLocationManager()
-        locationManager?.desiredAccuracy = kCLLocationAccuracyKilometer
+        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
         locationManager?.distanceFilter = 10_000
         locationManager?.delegate = self
+        locationManager?.allowsBackgroundLocationUpdates = true
+        locationManager?.showsBackgroundLocationIndicator = true
     }
 
     // MARK: - Public methods
@@ -35,13 +37,14 @@ final class LocationService: NSObject, LocationServiceProtocol {
         locationManager?.startUpdatingLocation()
     }
 }
+
 // MARK: - Extensions
 
 extension LocationService: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .notDetermined:
-            locationManager?.requestWhenInUseAuthorization()
+            locationManager?.requestAlwaysAuthorization()
         case .authorizedAlways, .authorizedWhenInUse:
             locationManager?.startUpdatingLocation()
         case .restricted, .denied:

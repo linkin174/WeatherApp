@@ -5,7 +5,6 @@
 //  Created by Aleksandr Kretov on 24.01.2023.
 //
 
-import Alamofire
 import Foundation
 
 enum FetcherError: Error {
@@ -43,7 +42,6 @@ protocol WeatherFetchingProtocol {
 final class WidgetFetcherService: WeatherFetchingProtocol {
     // MARK: - Private Properties
 
-//    private let userDefaults = UserDefaults(suiteName: "group.xxxZZZCCC")
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -51,7 +49,6 @@ final class WidgetFetcherService: WeatherFetchingProtocol {
     }()
 
     func fetchCurrentWeather(for city: City) async throws -> CurrentWeather {
-//        guard let city = loadCity() else { throw FetcherError.noCities }
         let parameters = makeParameters(for: city)
         guard let url = createURL(method: WeatherAPI.getWeather, parameters: parameters) else { throw FetcherError.badURL }
         let request = URLRequest(url: url)
@@ -60,15 +57,6 @@ final class WidgetFetcherService: WeatherFetchingProtocol {
         decoded.id = city.id
         return decoded
     }
-
-//    private func loadCity() -> City? {
-//        guard
-//            let data = userDefaults?.data(forKey: "cities"),
-//            let cities = try? JSONDecoder().decode([City].self, from: data),
-//            let first = cities.first
-//        else { return nil }
-//        return first
-//    }
 
     private func createURL(method: String, parameters: [String: String]? = nil) -> URL? {
         var components = URLComponents()

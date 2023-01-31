@@ -122,9 +122,9 @@ class DetailsPresenter: DetailsPresentationLogic {
 
         var popVolume: String {
             if let snowVolume = currentWeather.snow?.oneHour {
-                return String(Int(snowVolume)) + " mm"
+                return String(snowVolume) + " mm"
             } else if let rainVolume = currentWeather.rain?.oneHour {
-                return String(Int(rainVolume)) + " mm"
+                return String(rainVolume) + " mm"
             }
             return "0 mm"
         }

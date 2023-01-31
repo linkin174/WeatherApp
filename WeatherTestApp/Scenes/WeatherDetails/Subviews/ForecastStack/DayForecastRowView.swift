@@ -27,11 +27,7 @@ final class DayForecastRowView: UIView {
 
     private let iconImageView: UIImageView = {
         let view = UIImageView()
-        view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.clipsToBounds = true
-        #warning("fix shadow")
-//        view.dropShadow()
         return view
     }()
 
@@ -46,6 +42,11 @@ final class DayForecastRowView: UIView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        iconImageView.dropContactShadow(height: 6)
     }
 
     // MARK: - Public Methods
@@ -66,6 +67,8 @@ final class DayForecastRowView: UIView {
         addSubview(precipitationLabel)
         addSubview(dayTempLabel)
         addSubview(nightTempLabel)
+//        addSubview(containerView)
+//        containerView.addSubview(iconImageView)
 
         for subview in subviews {
             subview.snp.makeConstraints { make in
@@ -76,6 +79,11 @@ final class DayForecastRowView: UIView {
         dayLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
         }
+
+//        containerView.snp.makeConstraints { make in
+//            make.centerX.equalToSuperview()
+//            make.width.height.equalTo(25)
+//        }
 
         iconImageView.snp.makeConstraints { make in
             make.centerX.equalToSuperview()

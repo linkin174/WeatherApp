@@ -31,12 +31,8 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
     private let iconImageView: UIImageView = {
         let view = UIImageView()
         view.contentMode = .scaleAspectFit
-        view.clipsToBounds = true
-        #warning("fix shadow")
-//        view.dropShadow()
         return view
     }()
-
 
     private lazy var mainStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [timeLabel, iconImageView, tempTitleLabel])
@@ -57,6 +53,12 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        mainStack.layoutSubviews()
+        iconImageView.dropContactShadow(height: 6)
+    }
+
     // MARK: - Public Methods
 
     func setup(viewModel: HourlyCellViewModelProtocol) {
@@ -68,6 +70,7 @@ final class HourlyCell: UICollectionViewCell, HourlyCellProtocol {
     // MARK: - Private Methods
 
     private func setupConstraints() {
+
         contentView.addSubview(mainStack)
 
         mainStack.snp.makeConstraints { make in
