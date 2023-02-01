@@ -4,6 +4,11 @@
 <dict>
 	<key>API_KEY</key>
 	<string>$(API_KEY)</string>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>CitySelectionIntent</string>
+		<string>PlaceSelectionIntent</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

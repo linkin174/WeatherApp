@@ -82,6 +82,8 @@ final class WidgetFetcherService: WeatherFetchingProtocol {
         if let longitude = city.coord?.lon, let latitude = city.coord?.lat {
             parameters["lon"] = String(longitude)
             parameters["lat"] = String(latitude)
+        } else if let name = city.name {
+            parameters["q"] = name
         }
         return parameters
     }
