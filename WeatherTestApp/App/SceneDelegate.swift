@@ -26,24 +26,5 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Use this method to save data, release shared resources, and store enough scene-specific state information
         // to restore the scene back to its current state.
     }
-
-    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        #warning("remove maybe?")
-        let navigationController = window?.rootViewController as? UINavigationController
-        guard let urlString = URLContexts.first?.url.absoluteString else { return }
-        guard let index = Int(urlString) else { return }
-        let indexPath = IndexPath(row: index, section: 1)
-        if let mainVC = navigationController?.topViewController as? MainViewController {
-            mainVC.tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
-            mainVC.router?.routeToDetailsVC()
-        } else if let detailsVC = navigationController?.topViewController as? DetailsViewController {
-            if detailsVC.router?.dataStore?.weather?.id != index {
-                navigationController?.popToRootViewController(animated: false)
-                guard let mainVC = navigationController?.topViewController as? MainViewController else { return }
-                mainVC.tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
-                mainVC.router?.routeToDetailsVC()
-            }
-        }
-    }
 }
 

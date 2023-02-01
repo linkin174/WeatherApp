@@ -87,41 +87,48 @@ struct WeatherEntry: TimelineEntry {
 }
 
 struct WeatherWidgetEntryView: View {
+
     var entry: Provider.Entry
+    @Environment(\.colorScheme) var colorScheme
+
+    var gradientColors: [Color] {
+        colorScheme == .light ? [Color.cyan, Color.blue] : [Color.black, Color.blue.opacity(0.6)]
+    }
 
     var body: some View {
         ZStack {
             ContainerRelativeShape()
-                .fill(.linearGradient(colors: [.cyan, .blue],
+                .fill(.linearGradient(colors: gradientColors,
                                       startPoint: UnitPoint(x: 0, y: 0),
                                       endPoint: UnitPoint(x: 1, y: 1)))
             if let error = entry.error {
                 ErrorView(errorMessage: error)
             } else if let weather = entry.currentWeather {
                 WeatherView(weather: weather)
-                    .frame(height: 100)
             }
         }
         .shadow(radius: 5)
-        .widgetURL(URL(string: "\(entry.currentWeather?.id ?? 0)"))
     }
 }
 
 struct WeatherView: View {
     let weather: CurrentWeather
 
+    @Environment(\.colorScheme) private var colorScheme
+    private var textColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.8) : Color.white
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
                 Text(weather.name ?? "")
                     .font(.system(size: 16, design: .rounded))
-                    .foregroundColor(.white)
                     .lineLimit(1)
                 if weather.id == 0 {
                     Image(systemName: "location.fill")
                         .resizable()
-                        .foregroundColor(.white)
-                        .frame(width: 12, height: 12)
+                        .frame(width: 10, height: 10)
                 }
             }
             HStack(spacing: 8) {
@@ -132,12 +139,10 @@ struct WeatherView: View {
                         .opacity(0.8)
                 }
                 Text(weather.main.temp?.tempFormat() ?? "")
-                    .foregroundColor(.white)
                     .font(.system(size: 48, weight: .thin, design: .rounded))
             }
-            Text(weather.weather.first!.description ?? "")
+            Text(weather.weather.first!.description?.capitalized ?? "")
                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
             HStack {
                 Image(systemName: "arrow.down")
                 Text(weather.main.tempMin?.tempFormat() ?? "")
@@ -146,33 +151,39 @@ struct WeatherView: View {
                 Text(weather.main.tempMax?.tempFormat() ?? "")
                     .font(.system(size: 13, design: .rounded))
             }
-            .foregroundColor(.white)
             .font(.system(size: 12))
         }
+        .foregroundColor(textColor)
         .padding(4)
     }
 }
 
 struct ErrorView: View {
+
     let errorMessage: String
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var textColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.8) : Color.white
+    }
 
     var body: some View {
         ZStack {
             Image(systemName: "exclamationmark.triangle")
                 .resizable()
-                .frame(width: 100, height: 100)
+                .frame(width: 110, height: 100)
                 .foregroundColor(.white)
                 .opacity(0.1)
             VStack(spacing: 16) {
                 Text("Error loading widget:")
-                    .foregroundColor(.white)
                     .font(.system(size: 13, design: .rounded))
                     .multilineTextAlignment(.center)
                 Text(errorMessage)
-                    .foregroundColor(.white)
                     .font(.system(size: 13, design: .rounded).bold())
                     .multilineTextAlignment(.center)
             }
+            .foregroundColor(textColor)
             .padding(.horizontal, 8)
         }
     }
@@ -190,15 +201,8 @@ struct WeatherWidget: Widget {
             WeatherWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Weather")
-        .description("Simple widget to show weather in your current location")
+        .description("Watch weather in your current location")
         .supportedFamilies([.systemSmall])
-
-//        StaticConfiguration(kind: kind, provider: Provider(fetcher: fetcher, locationService: locationService)) { entry in
-//            WeatherWidgetEntryView(entry: entry)
-//        }
-//        .configurationDisplayName("Weather")
-//        .description("Simple widget to show weather in your current location")
-//        .supportedFamilies([.systemSmall])
     }
 }
 
