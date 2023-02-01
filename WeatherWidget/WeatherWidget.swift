@@ -8,65 +8,11 @@
 import SwiftUI
 import WidgetKit
 
-/*
-struct Provider: TimelineProvider {
-    // MARK: - Private properties
-
-    private let fetcher: WeatherFetchingProtocol
-    private let locationService: LocationServiceProtocol
-
-    // MARK - Initializers
-
-    init(fetcher: WeatherFetchingProtocol, locationService: LocationServiceProtocol) {
-        self.fetcher = fetcher
-        self.locationService = locationService
-    }
-
-    // MARK: - Public Methods
-    
-    func placeholder(in context: Context) -> WeatherEntry {
-        WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
-    }
-
-    func getSnapshot(in context: Context, completion: @escaping (WeatherEntry) -> ()) {
-        let entry = WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
-        completion(entry)
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        let currentDate = Date()
-        let nextDate = Calendar.current.date(byAdding: .hour, value: 1, to: currentDate)
-        locationService.getLocation { location in
-            if let location {
-                let city = City(coord: Coord(lon: location.coordinate.longitude,
-                                             lat: location.coordinate.latitude))
-                Task {
-                    do {
-                        let currentWeather = try await fetcher.fetchCurrentWeather(for: city)
-                        let entry = WeatherEntry(date: currentDate, currentWeather: currentWeather)
-                        let timelline = Timeline(entries: [entry], policy: .after(nextDate!))
-                        completion(timelline)
-                    } catch {
-                        let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: error.localizedDescription)
-                        let timeLine = Timeline(entries: [entry], policy: .after(nextDate!))
-                        completion(timeLine)
-                    }
-                }
-            } else {
-                let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: "Location services disabled")
-                let timeline = Timeline(entries: [entry], policy: .never)
-                completion(timeline)
-            }
-        }
-    }
-}
- */
 struct Provider: IntentTimelineProvider {
-
     private let fetcher: WeatherFetchingProtocol
     private let locationService: LocationServiceProtocol
 
-    // MARK - Initializers
+    // MARK: - Initializers
 
     init(fetcher: WeatherFetchingProtocol, locationService: LocationServiceProtocol) {
         self.fetcher = fetcher
@@ -77,60 +23,56 @@ struct Provider: IntentTimelineProvider {
         WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
     }
 
-    func getSnapshot(for configuration: DynamicCitySelectionIntent, in context: Context, completion: @escaping (WeatherEntry) -> Void) {
+    func getSnapshot(for configuration: SelectLocationIntent, in context: Context, completion: @escaping (WeatherEntry) -> Void) {
         let entry = WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
         completion(entry)
     }
 
-    func getTimeline(for configuration: DynamicCitySelectionIntent, in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> Void) {
-        #warning("Resolve duplicates!!!")
-        let currentDate = Date()
-        let nextDate = Calendar.current.date(byAdding: .hour, value: 1, to: currentDate)
-        if configuration.CityType?.identifier == "home" {
+    func getTimeline(for configuration: SelectLocationIntent, in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> Void) {
+        guard let locationType = configuration.location else { return }
+        if locationType.cityID as? Int == 0 {
             locationService.getLocation { location in
-                if let location {
-                    let city = City(coord: Coord(lon: location.coordinate.longitude, lat: location.coordinate.latitude), id: 0)
-                    Task {
-                        do {
-                            let currentWeather = try await fetcher.fetchCurrentWeather(for: city)
-                            let entry = WeatherEntry(date: currentDate, currentWeather: currentWeather)
-                            let timelline = Timeline(entries: [entry], policy: .after(nextDate!))
-                            completion(timelline)
-                        } catch {
-                            let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: error.localizedDescription)
-                            let timeLine = Timeline(entries: [entry], policy: .after(nextDate!))
-                            completion(timeLine)
-                        }
-                    }
-                } else {
-                    let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: "Location services disabled")
-                    let timeline = Timeline(entries: [entry], policy: .never)
+                let city = City(coord: Coord(lon: location?.coordinate.longitude,
+                                             lat: location?.coordinate.latitude),
+                                id: 0)
+                Task {
+                    let timeline = await makeTimeline(for: city)
                     completion(timeline)
                 }
             }
         } else {
+            let city = City(coord: Coord(lon: configuration.location?.longitude as? Double,
+                                         lat: configuration.location?.latitude as? Double),
+                            id: configuration.location?.cityID as? Int)
             Task {
-                do {
-                    let city = city(for: configuration)
-                    let currentWeather = try await fetcher.fetchCurrentWeather(for: city)
-                    let entry = WeatherEntry(date: currentDate, currentWeather: currentWeather)
-                    let timelline = Timeline(entries: [entry], policy: .after(nextDate!))
-                    completion(timelline)
-                } catch {
-                    let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: error.localizedDescription)
-                    let timeLine = Timeline(entries: [entry], policy: .after(nextDate!))
-                    completion(timeLine)
-                }
+                let timeline = await makeTimeline(for: city)
+                completion(timeline)
             }
         }
     }
 
-    private func city(for configuration: DynamicCitySelectionIntent) -> City {
-        City(name: configuration.CityType?.displayString, id: Int(configuration.CityType?.identifier ?? "0"))
+    private func makeTimeline(for city: City) async -> Timeline<WeatherEntry> {
+        let currentDate = Date()
+        let nextDate = Calendar.current.date(byAdding: .hour, value: 1, to: currentDate)
+        var timeline: Timeline<WeatherEntry>!
+        do {
+            let currentWeather = try await fetcher.fetchCurrentWeather(for: city)
+            let entry = WeatherEntry(date: currentDate, currentWeather: currentWeather)
+            timeline = Timeline(entries: [entry], policy: .after(nextDate!))
+        } catch {
+            let entry = WeatherEntry(date: currentDate, currentWeather: nil, error: error.localizedDescription)
+            timeline = Timeline(entries: [entry], policy: .after(nextDate!))
+        }
+        return timeline
+    }
+
+    private func city(for configuration: SelectLocationIntent) -> City {
+        City(name: configuration.location?.displayString,
+             coord: Coord(lon: configuration.location?.longitude as? Double,
+                          lat: configuration.location?.latitude as? Double),
+             id: configuration.location?.cityID as? Int)
     }
 }
-
-
 
 struct WeatherEntry: TimelineEntry {
     let date: Date
@@ -237,14 +179,13 @@ struct ErrorView: View {
 }
 
 struct WeatherWidget: Widget {
-
     let kind: String = "WeatherWidget"
     let fetcher = WidgetFetcherService()
     let locationService = LocationService()
 
     var body: some WidgetConfiguration {
         IntentConfiguration(kind: kind,
-                            intent: DynamicCitySelectionIntent.self,
+                            intent: SelectLocationIntent.self,
                             provider: Provider(fetcher: fetcher, locationService: locationService)) { entry in
             WeatherWidgetEntryView(entry: entry)
         }

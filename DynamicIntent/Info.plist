@@ -12,7 +12,7 @@
 			<array/>
 			<key>IntentsSupported</key>
 			<array>
-				<string>DynamicCitySelectionIntent</string>
+				<string>SelectLocationIntent</string>
 			</array>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>

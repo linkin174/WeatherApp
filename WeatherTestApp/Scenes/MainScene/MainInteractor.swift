@@ -10,7 +10,6 @@
 //  see http://clean-swift.com
 //
 
-import CoreLocation
 import UIKit
 
 // MARK: - Interactor Interface

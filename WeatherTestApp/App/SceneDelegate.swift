@@ -28,6 +28,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        #warning("remove maybe?")
         let navigationController = window?.rootViewController as? UINavigationController
         guard let urlString = URLContexts.first?.url.absoluteString else { return }
         guard let index = Int(urlString) else { return }
