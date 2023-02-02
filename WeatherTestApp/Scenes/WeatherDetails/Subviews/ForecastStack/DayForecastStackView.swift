@@ -30,10 +30,15 @@ final class DayForecastStackView: UIStackView {
     // MARK: - Public Methods
 
     func setup(viewModels: [DayForecastViewModelProtocol]) {
-        for viewModel in viewModels {
-            let dayRow = DayForecastRowView()
-            dayRow.setup(viewModel: viewModel)
-            addArrangedSubview(dayRow)
+        for (index, viewModel) in viewModels.enumerated() {
+            if arrangedSubviews.count < viewModels.count {
+                let dayRow = DayForecastRowView()
+                dayRow.setup(viewModel: viewModel)
+                addArrangedSubview(dayRow)
+            } else {
+                guard let subview = arrangedSubviews[index] as? DayForecastRowView else { return }
+                subview.setup(viewModel: viewModel)
+            }
         }
     }
 }

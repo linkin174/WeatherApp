@@ -15,6 +15,7 @@ import UIKit
 protocol MainPresentationLogic {
     func presentWeather(response: MainScene.LoadWeather.Response)
     func presentError(response: MainScene.HandleError.Response)
+    func endLoading()
 }
 
 final class MainPresenter: MainPresentationLogic {
@@ -43,6 +44,10 @@ final class MainPresenter: MainPresentationLogic {
         viewController?.displayError(viewModel: viewModel)
     }
 
+    func endLoading() {
+        viewController?.endLoading()
+    }
+
     // MARK: - Private methods
 
     private func makeWeatherCellViewModels(from weather: [CurrentWeather]) -> [WeatherCellViewModelProtocol] {
@@ -50,9 +55,9 @@ final class MainPresenter: MainPresentationLogic {
             let icon = getWeatherIcon(from: element.weather.first?.icon)
             return WeatherCellViewModel(cityName: element.name ?? "--",
                                         weatherIcon: icon,
-                                        temp: getFormattedTemp(element.main.temp),
+                                        temp: element.main.temp?.tempFormat() ?? "--",
                                         currentTime: Date().shortTimeStyle(adding: Double(element.timezone)),
-                                        cityId: element.internalId ?? 0)
+                                        cityId: element.id ?? 0)
         }
     }
 
@@ -75,14 +80,5 @@ final class MainPresenter: MainPresentationLogic {
             let image = UIImage(named: String(codePrefix))
         else { return nil }
         return image
-    }
-
-    private func getFormattedTemp(_ temp: Double?) -> String {
-        guard let temp else { return "--" }
-        let formatter = MeasurementFormatter()
-        let rounded = Double(Int(temp.rounded()))
-        let measurment = Measurement(value: rounded, unit: UnitTemperature.celsius)
-        let string = formatter.string(from: measurment)
-        return String(string.dropLast(1))
     }
 }

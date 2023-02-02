@@ -10,11 +10,12 @@
 //  see http://clean-swift.com
 //
 
-import CoreLocation
 import UIKit
 
+// MARK: - Interactor Interface
+
 protocol MainBusinessLogic: AnyObject {
-    func loadData()
+    func loadData(force: Bool)
     func searchCity(request: MainScene.SearchCities.Request)
     func removeCity(request: MainScene.RemoveCity.Request)
     func addCity(request: MainScene.AddCity.Request)
@@ -26,7 +27,6 @@ protocol MainDataStore {
 }
 
 final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
-    
     // MARK: - Public Properties
 
     var presenter: MainPresentationLogic?
@@ -38,23 +38,32 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 
     private let storageService: StorageServiceProtocol
     private let networkService: NetworkServiceProtocol
-    private var locationManager: CLLocationManager?
-    private var cities: [City] = []
+    private var locationService: LocationServiceProtocol
 
     // MARK: - Initializers
 
-    init(storageService: StorageServiceProtocol, networkService: NetworkServiceProtocol) {
+    init(storageService: StorageServiceProtocol, networkService: NetworkServiceProtocol, locationService: LocationServiceProtocol) {
         self.storageService = storageService
         self.networkService = networkService
+        self.locationService = locationService
+        super.init()
+        loadData(force: true)
     }
 
     // MARK: - Interaction Logic
 
-    func loadData() {
-        locationManager = CLLocationManager()
-        locationManager?.delegate = self
-        locationManager?.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        cities = storageService.loadCities()
+    func loadData(force: Bool) {
+        if force {
+            handleCurrentLocationAndLoad()
+        } else {
+            let currentDate = Date()
+            let forecastDate = Date().dateFrom(secondsUTC: currentWeather.first?.dt ?? 0)
+            if forecastDate.distance(to: currentDate) > 3600 {
+                handleCurrentLocationAndLoad()
+            } else {
+                presenter?.endLoading()
+            }
+        }
     }
 
     func searchCity(request: MainScene.SearchCities.Request) {
@@ -82,10 +91,12 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
 
     func addCity(request: MainScene.AddCity.Request) {
         let placeToAdd = places[request.indexPath.row]
+        let currentCities = storageService.getCities()
+        let maxID = currentCities.max(by: { $1.id ?? 0 > $0.id ?? 0 })?.id ?? 0
         let city = City(name: placeToAdd.name,
-                        coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat), id: currentWeather.count + 1)
-        storageService.add(city)
-        cities.append(city)
+                        coord: Coord(lon: placeToAdd.lon, lat: placeToAdd.lat),
+                        id: maxID + 1)
+        storageService.save(city)
         networkService.fetchCurrentWeather(for: [city]) { [unowned self] result in
             switch result {
             case .success(let weather):
@@ -102,20 +113,35 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
     }
 
     func removeCity(request: MainScene.RemoveCity.Request) {
-        guard let city = cities.first(where: { $0.id == request.cityID }) else { return }
-        currentWeather.removeAll(where: { $0.internalId == city.id })
-        storageService.remove(city)
+        let cities = storageService.getCities()
+        guard let cityID = cities.first(where: { $0.id == request.cityID })?.id else { return }
+        currentWeather.removeAll(where: { $0.id == cityID })
+        storageService.remove(cityID: cityID)
     }
 
     // MARK: - Private Methods
 
+    private func handleCurrentLocationAndLoad() {
+        locationService.getLocation { [unowned self] location in
+            if let location {
+                let currentCity = City(coord: Coord(lon: location.coordinate.longitude,
+                                                    lat: location.coordinate.latitude),
+                                       id: 0)
+                storageService.save(currentCity)
+            } else {
+                storageService.remove(cityID: 0)
+            }
+            loadForecast()
+        }
+    }
+
     private func loadForecast() {
-        updateCitiesWithLocaitonInfo()
+        let cities = storageService.getCities()
         networkService.fetchCurrentWeather(for: cities) { [unowned self] result in
             switch result {
             case .success(let weather):
                 self.currentWeather = weather
-                    .sorted { $0.internalId ?? 0 < $1.internalId ?? 0}
+                    .sorted { $0.id ?? 0 < $1.id ?? 0 }
                 let response = MainScene.LoadWeather.Response(weather: currentWeather, places: places)
                 presenter?.presentWeather(response: response)
             case .failure(let error):
@@ -125,33 +151,10 @@ final class MainInteractor: NSObject, MainBusinessLogic, MainDataStore {
         }
     }
 
-    private func updateCitiesWithLocaitonInfo() {
-        if let location = locationManager?.location {
-            let currentCity = City(coord: Coord(lon: location.coordinate.longitude,
-                                                lat: location.coordinate.latitude),
-                                   id: 0)
-            if let index = cities.firstIndex(where: { $0.id == currentCity.id }) {
-                cities[index] = currentCity
-            } else {
-                cities.insert(currentCity, at: 0)
-            }
-        }
-    }
-
     private func roundCoordinates(_ coord: Coord?) -> Coord? {
         guard let lat = coord?.lat, let lon = coord?.lon else { return nil }
         let roundedLon = round(lon * 100) / 100
         let roundedLat = round(lat * 100) / 100
         return Coord(lon: roundedLon, lat: roundedLat)
-    }
-}
-// MARK: - Extensions
-extension MainInteractor: CLLocationManagerDelegate {
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        switch manager.authorizationStatus {
-        case .notDetermined:
-            locationManager?.requestWhenInUseAuthorization()
-        default: loadForecast()
-        }
     }
 }

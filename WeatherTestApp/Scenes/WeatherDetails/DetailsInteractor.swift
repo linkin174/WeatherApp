@@ -13,6 +13,8 @@
 import UIKit
 
 protocol DetailsBusinessLogic {
+    func onLoad()
+    func reloadForecastOnEnterForeground()
     func loadForecast()
 }
 
@@ -21,7 +23,6 @@ protocol DetailsDataStore {
 }
 
 class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
-
     // MARK: - Public Properties
 
     var weather: CurrentWeather?
@@ -39,18 +40,51 @@ class DetailsInteractor: DetailsBusinessLogic, DetailsDataStore {
 
     // MARK: Interaction Logic
 
-    func loadForecast() {
+    func onLoad() {
         guard let weather else { return }
         // For displaying header
         let response = Details.ShowCurrentWeather.Response(weather: weather)
         presenter?.presentCurrentWeather(response: response)
         // Loading daily information
-        let city = City(coord: weather.coord, id: weather.internalId ?? 0)
+        loadForecast()
+    }
+
+    func reloadForecastOnEnterForeground() {
+        let currentDate = Date()
+        let forecastDate = Date().dateFrom(secondsUTC: weather?.dt ?? 0)
+        if forecastDate.distance(to: currentDate) > 3600 {
+            loadCurrentWeather()
+            loadForecast()
+        } else {
+            presenter?.endLoading()
+        }
+    }
+
+    func loadForecast() {
+        guard let weather else { return }
+        let city = City(coord: weather.coord, id: weather.id ?? 0)
         networkService.fetchDailyForecast(for: city) { [unowned self] result in
             switch result {
             case .success(let forecast):
                 let response = Details.ShowForecast.Response(forecast: forecast, currentweather: weather)
                 presenter?.presentForecast(response: response)
+            case .failure(let error):
+                let response = Details.HandleError.Response(error: error)
+                presenter?.presentError(response: response)
+            }
+        }
+    }
+
+    private func loadCurrentWeather() {
+        guard let weather else { return }
+        let city = City(coord: weather.coord, id: weather.id ?? 0)
+        networkService.fetchCurrentWeather(for: [city]) { [unowned self] result in
+            switch result {
+            case .success(let currentWeather):
+                if let first = currentWeather.first {
+                    let response = Details.ShowCurrentWeather.Response(weather: first)
+                    presenter?.presentCurrentWeather(response: response)
+                }
             case .failure(let error):
                 let response = Details.HandleError.Response(error: error)
                 presenter?.presentError(response: response)

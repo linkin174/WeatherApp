@@ -21,30 +21,39 @@ private enum API {
 final class AFNetworkService: NetworkServiceProtocol {
     // MARK: - Private Properties
 
-    let decoder = JSONDecoder()
-
-    // MARK: - Initializers
-
-    init() {
+    private let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-    }
+        return decoder
+    }()
+
+    private let sessionManager: Session = {
+        let config = URLSessionConfiguration.default
+        config.requestCachePolicy = .useProtocolCachePolicy
+        config.timeoutIntervalForRequest = 30
+        let memoryCapacity = 5 * 1024 * 1024
+        let diskCapacity = 5 * 1024 * 1024
+        let cache = URLCache(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity)
+        config.urlCache = cache
+        return Session(configuration: config)
+    }()
 
     // MARK: - Public Methods
 
     func fetchCurrentWeather(for cities: [City], completion: @escaping (Result<[CurrentWeather], AFError>) -> Void) {
-        let url = createURL(api: .weather, WeatherAPI.getWeather)
-        let dispatchGroup = DispatchGroup()
         var output = [CurrentWeather]()
         var fetchingError: AFError?
+        let url = createURL(api: .weather, WeatherAPI.getWeather)
+        let dispatchGroup = DispatchGroup()
         for city in cities {
             dispatchGroup.enter()
             let parameters = makeParameters(for: city)
-            AF.request(url, parameters: parameters)
+            sessionManager.request(url, method: .get, parameters: parameters)
                 .validate()
                 .responseDecodable(of: CurrentWeather.self, decoder: decoder) { response in
                     switch response.result {
                     case .success(var weather):
-                        weather.internalId = city.id
+                        weather.id = city.id
                         output.append(weather)
                         dispatchGroup.leave()
                     case .failure(let error):
@@ -80,7 +89,7 @@ final class AFNetworkService: NetworkServiceProtocol {
     func fetchCities(searchString: String, completion: @escaping ([Place]) -> Void) {
         let url = createURL(api: .geocoder, GeocoderAPI.searchCity)
         let parameters = makeParameters(for: searchString)
-        AF.request(url, parameters: parameters)
+        sessionManager.request(url, parameters: parameters)
             .validate()
             .responseDecodable(of: [Place].self, decoder: decoder) { response in
                 switch response.result {

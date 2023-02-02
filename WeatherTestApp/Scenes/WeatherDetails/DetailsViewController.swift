@@ -17,6 +17,7 @@ protocol DetailsDisplayLogic: AnyObject {
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel)
     func displayCurrentWeather(viewModel: Details.ShowCurrentWeather.ViewModel)
     func displayError(viewModel: Details.HandleError.ViewModel)
+    func displayEndLoading()
 }
 
 final class DetailsViewController: UIViewController {
@@ -25,7 +26,19 @@ final class DetailsViewController: UIViewController {
     var interactor: DetailsBusinessLogic?
     var router: (NSObjectProtocol & DetailsRoutingLogic & DetailsDataPassing)?
 
+    // MARK: - Private properties
+
+    private var notificationObserver: NSObjectProtocol?
+
     // MARK: Views
+
+    private var loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView()
+        indicator.startAnimating()
+        indicator.hidesWhenStopped = true
+        indicator.color = .white
+        return indicator
+    }()
 
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -62,6 +75,12 @@ final class DetailsViewController: UIViewController {
         super.init(coder: aDecoder)
     }
 
+    deinit {
+        if let notificationObserver {
+            NotificationCenter.default.removeObserver(notificationObserver)
+        }
+    }
+
     // MARK: - View lifecycle
 
     override func viewDidLoad() {
@@ -69,7 +88,11 @@ final class DetailsViewController: UIViewController {
         view.backgroundColor = #colorLiteral(red: 0.2492019534, green: 0.5160208344, blue: 0.8688297868, alpha: 1)
         navigationItem.largeTitleDisplayMode = .never
         setupConstraints()
-        loadData()
+        interactor?.onLoad()
+        notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
+                                                                      object: nil,
+                                                                      queue: .main,
+                                                                      using: { [unowned self] _ in reloadForecastOnEnterForeground() })
     }
 
     // MARK: - Setup Clean Code Design Pattern
@@ -88,18 +111,11 @@ final class DetailsViewController: UIViewController {
         router.dataStore = interactor
     }
 
-    // MARK: - Requesting Logic
-
-    private func loadData() {
-        interactor?.loadForecast()
-    }
-
-
-
     // MARK: - Private Methods
 
     private func setupConstraints() {
         view.addSubview(topHeaderView)
+        topHeaderView.addSubview(loadingIndicator)
         view.addSubview(firstSeparator)
         view.addSubview(collectionView)
         view.addSubview(secondSeparator)
@@ -107,6 +123,11 @@ final class DetailsViewController: UIViewController {
 
         scrollView.addSubview(dayForecastStack)
         scrollView.addSubview(miscInfoView)
+
+        loadingIndicator.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().inset(20)
+            make.top.equalToSuperview().offset(20)
+        }
 
         firstSeparator.snp.makeConstraints { make in
             make.top.equalTo(topHeaderView.snp.bottom)
@@ -149,6 +170,11 @@ final class DetailsViewController: UIViewController {
         }
     }
 
+    private func reloadForecastOnEnterForeground() {
+        loadingIndicator.startAnimating()
+        interactor?.reloadForecastOnEnterForeground()
+    }
+
     private func animateViews() {
         collectionView.fadeIn(duration: 0.6)
         firstSeparator.fadeIn(duration: 0.6)
@@ -166,7 +192,9 @@ final class DetailsViewController: UIViewController {
 
 extension DetailsViewController: DetailsDisplayLogic {
     // MARK: - Display Logic
+    
     func displayDetailedForecast(viewModel: Details.ShowForecast.ViewModel) {
+        loadingIndicator.stopAnimating()
         dayForecastStack.setup(viewModels: viewModel.dailyForecastViewModels)
         miscInfoView.setup(viewModel: viewModel.miscInfoViewModel)
         collectionView.setup(with: viewModel.hourlyForecastViewModels)
@@ -179,8 +207,12 @@ extension DetailsViewController: DetailsDisplayLogic {
 
     func displayError(viewModel: Details.HandleError.ViewModel) {
         let retryAction = UIAlertAction(title: "Retry", style: .default) { _ in
-            self.loadData()
+            self.interactor?.loadForecast()
         }
         showAlert(title: "OOPS!", message: viewModel.errorMessage, actions: [retryAction])
+    }
+
+    func displayEndLoading() {
+        loadingIndicator.stopAnimating()
     }
 }

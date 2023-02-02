@@ -16,6 +16,7 @@ protocol MainDisplayLogic: AnyObject {
     func displayCurrentWeather(viewModel: MainScene.LoadWeather.ViewModel)
     func displayError(viewModel: MainScene.HandleError.ViewModel)
     func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel)
+    func endLoading()
 }
 
 final class MainViewController: UIViewController, MainDisplayLogic {
@@ -61,8 +62,9 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     private lazy var refreshControl: UIRefreshControl = {
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(loadData), for: .valueChanged)
+        refreshControl.addTarget(self, action: #selector(reloadData(sender:)), for: .valueChanged)
         refreshControl.tintColor = .white
+        refreshControl.tag = 0
         let attributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor.white,
             .font: UIFont.systemFont(ofSize: 16)
@@ -73,14 +75,6 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     }()
 
     private let indicator: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .medium)
-        indicator.color = .white
-        indicator.startAnimating()
-        indicator.hidesWhenStopped = true
-        return indicator
-    }()
-
-    private let sectionIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
         indicator.color = .white
         indicator.startAnimating()
@@ -112,11 +106,10 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         title = "Weather"
         setupNavigationBar()
         setupConstraints()
-        loadData()
         notificationObserver = NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
                                                                       object: nil,
                                                                       queue: .main,
-                                                                      using: { [unowned self] _ in loadData() })
+                                                                      using: { [unowned self] _ in reloadData() })
     }
 
     // MARK: - Display Logic
@@ -127,6 +120,7 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         indicator.stopAnimating()
         refreshControl.endRefreshing()
         tableView.reloadSections(IndexSet(integersIn: 1 ... 2), with: .fade)
+        tableView.layoutIfNeeded()
     }
 
     func displaySearchResults(viewModel: MainScene.LoadWeather.ViewModel) {
@@ -138,9 +132,13 @@ final class MainViewController: UIViewController, MainDisplayLogic {
 
     func displayError(viewModel: MainScene.HandleError.ViewModel) {
         let retryAction = UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
-            self?.loadData()
+            self?.reloadData(sender: self?.refreshControl)
         }
         showAlert(title: "OOPS", message: viewModel.errorMessage, actions: [retryAction])
+    }
+
+    func endLoading() {
+        indicator.stopAnimating()
     }
 
     // MARK: - Private Methods
@@ -148,9 +146,11 @@ final class MainViewController: UIViewController, MainDisplayLogic {
     private func setupModule() {
         let networkService = AFNetworkService()
         let storageService = StorageService()
+        let locationService = LocationService()
         let viewController = self
         let interactor = MainInteractor(storageService: storageService,
-                                        networkService: networkService)
+                                        networkService: networkService,
+                                        locationService: locationService)
         let presenter = MainPresenter()
         let router = MainRouter()
         viewController.interactor = interactor
@@ -273,11 +273,15 @@ final class MainViewController: UIViewController, MainDisplayLogic {
         interactor?.addCity(request: request)
     }
 
-    @objc private func loadData() {
+    @objc private func reloadData(sender: UIView? = nil) {
         if !refreshControl.isRefreshing {
             indicator.startAnimating()
         }
-        interactor?.loadData()
+        if let tag = sender?.tag, tag == 0 {
+            interactor?.loadData(force: true)
+        } else {
+            interactor?.loadData(force: false)
+        }
     }
 }
 
@@ -299,7 +303,7 @@ extension MainViewController: UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        if indexPath.section == 1, indexPath.row != 0 {
+        if indexPath.section == 1, mainViewModel?.weatherCellViewModels[indexPath.row].cityId != 0 {
             let deleteAction = UIContextualAction(style: .destructive, title: "Remove") { [weak self] _, _, completion in
                 self?.deleteCity(at: indexPath)
                 completion(true)
