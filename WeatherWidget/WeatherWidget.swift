@@ -9,6 +9,9 @@ import SwiftUI
 import WidgetKit
 
 struct Provider: IntentTimelineProvider {
+
+    // MARK: - Private properties
+
     private let fetcher: WeatherFetchingProtocol
     private let locationService: LocationServiceProtocol
 
@@ -201,7 +204,7 @@ struct WeatherWidget: Widget {
             WeatherWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Weather")
-        .description("Watch weather in your current location")
+        .description("Get the weather forecast for the selected location")
         .supportedFamilies([.systemSmall])
     }
 }
