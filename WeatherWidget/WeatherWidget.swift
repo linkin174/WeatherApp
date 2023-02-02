@@ -26,20 +26,24 @@ struct Provider: IntentTimelineProvider {
         WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
     }
 
-    func getSnapshot(for configuration: SelectLocationIntent, in context: Context, completion: @escaping (WeatherEntry) -> Void) {
+    func getSnapshot(for configuration: WeatherSettingsIntent, in context: Context, completion: @escaping (WeatherEntry) -> Void) {
         let entry = WeatherEntry(date: Date(), currentWeather: CurrentWeather.placeholder)
         completion(entry)
     }
 
-    func getTimeline(for configuration: SelectLocationIntent, in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> Void) {
-        guard let locationType = configuration.location else { return }
+    func getTimeline(for configuration: WeatherSettingsIntent, in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> Void) {
+        #warning("remove fetching to the intent handler??")
+        guard
+            let locationType = configuration.location,
+            let updateInterval = configuration.updateInterval as? Int
+        else { return }
         if locationType.cityID as? Int == 0 {
             locationService.getLocation { location in
                 let city = City(coord: Coord(lon: location?.coordinate.longitude,
                                              lat: location?.coordinate.latitude),
                                 id: 0)
                 Task {
-                    let timeline = await makeTimeline(for: city)
+                    let timeline = await makeTimeline(for: city, updateInterval: updateInterval)
                     completion(timeline)
                 }
             }
@@ -48,15 +52,15 @@ struct Provider: IntentTimelineProvider {
                                          lat: configuration.location?.latitude as? Double),
                             id: configuration.location?.cityID as? Int)
             Task {
-                let timeline = await makeTimeline(for: city)
+                let timeline = await makeTimeline(for: city, updateInterval: updateInterval)
                 completion(timeline)
             }
         }
     }
 
-    private func makeTimeline(for city: City) async -> Timeline<WeatherEntry> {
+    private func makeTimeline(for city: City, updateInterval: Int) async -> Timeline<WeatherEntry> {
         let currentDate = Date()
-        let nextDate = Calendar.current.date(byAdding: .hour, value: 1, to: currentDate)
+        let nextDate = Calendar.current.date(byAdding: .hour, value: updateInterval, to: currentDate)
         var timeline: Timeline<WeatherEntry>!
         do {
             let currentWeather = try await fetcher.fetchCurrentWeather(for: city)
@@ -69,7 +73,7 @@ struct Provider: IntentTimelineProvider {
         return timeline
     }
 
-    private func city(for configuration: SelectLocationIntent) -> City {
+    private func city(for configuration: WeatherSettingsIntent) -> City {
         City(name: configuration.location?.displayString,
              coord: Coord(lon: configuration.location?.longitude as? Double,
                           lat: configuration.location?.latitude as? Double),
@@ -199,7 +203,7 @@ struct WeatherWidget: Widget {
 
     var body: some WidgetConfiguration {
         IntentConfiguration(kind: kind,
-                            intent: SelectLocationIntent.self,
+                            intent: WeatherSettingsIntent.self,
                             provider: Provider(fetcher: fetcher, locationService: locationService)) { entry in
             WeatherWidgetEntryView(entry: entry)
         }

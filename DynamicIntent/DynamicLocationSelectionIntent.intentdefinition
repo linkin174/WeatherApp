@@ -26,9 +26,9 @@
 			<key>INIntentIneligibleForSuggestions</key>
 			<true/>
 			<key>INIntentLastParameterTag</key>
-			<integer>3</integer>
+			<integer>5</integer>
 			<key>INIntentName</key>
-			<string>SelectLocation</string>
+			<string>WeatherSettings</string>
 			<key>INIntentParameters</key>
 			<array>
 				<dict>
@@ -68,6 +68,48 @@
 					<key>INIntentParameterType</key>
 					<string>Object</string>
 				</dict>
+				<dict>
+					<key>INIntentParameterConfigurable</key>
+					<true/>
+					<key>INIntentParameterDisplayName</key>
+					<string>Update Interval</string>
+					<key>INIntentParameterDisplayNameID</key>
+					<string>aNo5aC</string>
+					<key>INIntentParameterDisplayPriority</key>
+					<integer>2</integer>
+					<key>INIntentParameterMetadata</key>
+					<dict>
+						<key>INIntentParameterMetadataDefaultValue</key>
+						<integer>1</integer>
+						<key>INIntentParameterMetadataMaximumValue</key>
+						<integer>6</integer>
+						<key>INIntentParameterMetadataMinimumValue</key>
+						<integer>1</integer>
+						<key>INIntentParameterMetadataType</key>
+						<string>Stepper</string>
+					</dict>
+					<key>INIntentParameterName</key>
+					<string>updateInterval</string>
+					<key>INIntentParameterPromptDialogs</key>
+					<array>
+						<dict>
+							<key>INIntentParameterPromptDialogCustom</key>
+							<true/>
+							<key>INIntentParameterPromptDialogType</key>
+							<string>Configuration</string>
+						</dict>
+						<dict>
+							<key>INIntentParameterPromptDialogCustom</key>
+							<true/>
+							<key>INIntentParameterPromptDialogType</key>
+							<string>Primary</string>
+						</dict>
+					</array>
+					<key>INIntentParameterTag</key>
+					<integer>5</integer>
+					<key>INIntentParameterType</key>
+					<string>Integer</string>
+				</dict>
 			</array>
 			<key>INIntentResponse</key>
 			<dict>
@@ -86,7 +128,7 @@
 				</array>
 			</dict>
 			<key>INIntentTitle</key>
-			<string>Select Location</string>
+			<string>Weather Settings</string>
 			<key>INIntentTitleID</key>
 			<string>PZIQIh</string>
 			<key>INIntentType</key>

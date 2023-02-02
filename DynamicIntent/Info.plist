@@ -12,7 +12,7 @@
 			<array/>
 			<key>IntentsSupported</key>
 			<array>
-				<string>SelectLocationIntent</string>
+				<string>WeatherSettingsIntent</string>
 			</array>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>

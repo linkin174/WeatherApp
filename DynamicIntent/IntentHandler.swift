@@ -50,14 +50,14 @@ class IntentHandler: INExtension {
 
 // MARK: - Extensions
 
-extension IntentHandler: SelectLocationIntentHandling {
-    func defaultLocation(for intent: SelectLocationIntent) -> LocationType? {
+extension IntentHandler: WeatherSettingsIntentHandling {
+    func defaultLocation(for intent: WeatherSettingsIntent) -> LocationType? {
         guard let firstCity = cities.first else { return nil }
         let type = makeLocationType(from: firstCity)
         return type
     }
 
-    func provideLocationOptionsCollection(for intent: SelectLocationIntent) async -> INObjectCollection<LocationType> {
+    func provideLocationOptionsCollection(for intent: WeatherSettingsIntent) async -> INObjectCollection<LocationType> {
         let locationTypes = cities.map { makeLocationType(from: $0) }
         return INObjectCollection(items: locationTypes)
     }
